@@ -1,0 +1,34 @@
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+### Compiled files ###
+*.class
+*.jar
+
+### Runtime files created by the game ###
+logs/*
+!logs/.gitkeep
+data/bestscore.txt
+
+### Eclipse ###
+.classpath
+.project
+.settings/
+bin/
+
+### NetBeans ###
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+
+### VS Code ###
+.vscode/
+
+### OS files ###
+.DS_Store
+Thumbs.db
