@@ -1,34 +1,15 @@
-### IntelliJ IDEA ###
-.idea/
-*.iml
-*.iws
-*.ipr
-out/
+# Ignore everything in the project root by default
+/*
 
-### Compiled files ###
+# Track only the project files
+!/.gitignore
+!/README.md
+!/src/
+!/data/
+!/logs/
+!/resources/
+
+# Junk that can appear inside the tracked folders
 *.class
-*.jar
-
-### Runtime files created by the game ###
-logs/*
-!logs/.gitkeep
-data/bestscore.txt
-
-### Eclipse ###
-.classpath
-.project
-.settings/
-bin/
-
-### NetBeans ###
-nbproject/private/
-nbbuild/
-dist/
-nbdist/
-
-### VS Code ###
-.vscode/
-
-### OS files ###
 .DS_Store
 Thumbs.db
