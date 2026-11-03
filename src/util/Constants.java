@@ -18,6 +18,12 @@ public final class Constants {
     public static final int TIME_ATTACK_SECONDS = 180;
     public static final int TARGET_SCORE = 500;
 
+    // Scoring
+    public static final int POINTS_PER_CELL = 1;
+    public static final int POINTS_PER_LINE = 10;
+    // Bonus for every extra line cleared in the same move (2 lines = 1 bonus, 3 lines = 2 bonuses)
+    public static final int MULTI_LINE_BONUS_PER_EXTRA_LINE = 10;
+
     // Block colours: 0 means an empty cell
     public static final int EMPTY_CELL = 0;
     public static final int COLOR_BLUE = 1;
