@@ -11,6 +11,9 @@ public final class Constants {
     public static final int WINDOW_WIDTH = 600;
     public static final int WINDOW_HEIGHT = 800;
 
+    // Number of piece slots in the tray
+    public static final int TRAY_SIZE = 3;
+
     // Game modes (configurable)
     public static final int TIME_ATTACK_SECONDS = 180;
     public static final int TARGET_SCORE = 500;
@@ -57,7 +60,7 @@ public final class Constants {
     public static final String IMAGE_WIN_CHECK = "images/win/win_check.png";
 
     // Font path
-    public static final String FONT_PATH = "fonts/Kenney_future_narrow.ttf";
+    public static final String FONT_PATH = "fonts/kenney_future_narrow.ttf";
 
     // Sound paths
     public static final String SOUND_CLEAR = "sounds/clear.wav";
