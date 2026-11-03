@@ -48,6 +48,10 @@ public class BlockPiece {
         return Collections.unmodifiableList(cells);
     }
 
+    public int getCellCount() {
+        return cells.size();
+    }
+
     public int getColorIndex() {
         return colorIndex;
     }

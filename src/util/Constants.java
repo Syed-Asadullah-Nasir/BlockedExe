@@ -11,9 +11,18 @@ public final class Constants {
     public static final int WINDOW_WIDTH = 600;
     public static final int WINDOW_HEIGHT = 800;
 
+    // Number of piece slots in the tray
+    public static final int TRAY_SIZE = 3;
+
     // Game modes (configurable)
     public static final int TIME_ATTACK_SECONDS = 180;
     public static final int TARGET_SCORE = 500;
+
+    // Scoring
+    public static final int POINTS_PER_CELL = 1;
+    public static final int POINTS_PER_LINE = 10;
+    // Bonus for every extra line cleared in the same move (2 lines = 1 bonus, 3 lines = 2 bonuses)
+    public static final int MULTI_LINE_BONUS_PER_EXTRA_LINE = 10;
 
     // Block colours: 0 means an empty cell
     public static final int EMPTY_CELL = 0;
@@ -57,7 +66,7 @@ public final class Constants {
     public static final String IMAGE_WIN_CHECK = "images/win/win_check.png";
 
     // Font path
-    public static final String FONT_PATH = "fonts/Kenney_future_narrow.ttf";
+    public static final String FONT_PATH = "fonts/kenney_future_narrow.ttf";
 
     // Sound paths
     public static final String SOUND_CLEAR = "sounds/clear.wav";
