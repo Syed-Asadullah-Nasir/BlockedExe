@@ -8,12 +8,12 @@ import model.BlockPiece;
 import model.GameMode;
 import model.GameState;
 import util.Constants;
+import util.TimeFormat;
 
 import javax.swing.JPanel;
 import javax.swing.Timer;
-import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
@@ -25,17 +25,19 @@ import java.awt.event.ActionListener;
 public class GamePanel extends JPanel implements ActionListener {
 
     private static final int TIMER_DELAY_MS = 16;
+    // One tick can never add more than this. If the computer sleeps or the window freezes,
+    // the player does not lose a whole Time Attack round in a single tick.
+    private static final long MAX_TICK_NANOS = 250000000L;
     private static final int NO_SLOT = -1;
     private static final int START_PREVIEW_POSITION = 3;
 
+    private final GameFrame gameFrame;
     private final BoardRenderer boardRenderer;
     private final HudRenderer hudRenderer;
+    private final OverlayRenderer overlayRenderer;
     private final Timer timer;
-    private final Font pauseFont;
-    private final Font hintFont;
 
     private Game game;
-    private long elapsedNanos;
     private long lastTickNanos;
     private boolean soundMuted;   // Placeholder: SoundManager takes over in Phase 11
 
@@ -50,11 +52,11 @@ public class GamePanel extends JPanel implements ActionListener {
     private int previewCol = START_PREVIEW_POSITION;
 
     public GamePanel(GameFrame gameFrame) {
+        this.gameFrame = gameFrame;
         this.boardRenderer = new BoardRenderer();
         this.hudRenderer = new HudRenderer(gameFrame.createUiFont(12f));
+        this.overlayRenderer = new OverlayRenderer(gameFrame.createUiFont(12f));
         this.timer = new Timer(TIMER_DELAY_MS, this);
-        this.pauseFont = gameFrame.createUiFont(56f);
-        this.hintFont = gameFrame.createUiFont(24f);
         this.soundMuted = false;
 
         setPreferredSize(new Dimension(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
@@ -80,7 +82,7 @@ public class GamePanel extends JPanel implements ActionListener {
         selectedSlot = NO_SLOT;
     }
 
-    // R key: a fresh game in the same mode.
+    // R key and the Restart buttons: a fresh game in the same mode.
     public void restartGame() {
         if (game == null) {
             return;
@@ -104,6 +106,51 @@ public class GamePanel extends JPanel implements ActionListener {
         } else if (game.getState() == GameState.PAUSED) {
             game.resume();
         }
+    }
+
+    // ----- overlay screens (called by MouseInputHandler) -----
+
+    // True while the pause screen or an end-of-game screen is on top of the game.
+    public boolean isOverlayShowing() {
+        return game != null && game.getState() != GameState.PLAYING;
+    }
+
+    // Does what the clicked overlay button says. A click anywhere else does nothing.
+    public void clickOverlay(int mouseX, int mouseY) {
+        if (!isOverlayShowing()) {
+            return;
+        }
+        OverlayAction action = overlayRenderer.actionAt(game.getState(), mouseX, mouseY);
+        if (action == null) {
+            return;
+        }
+
+        overlayRenderer.clearHover();
+        setCursor(Cursor.getDefaultCursor());
+        switch (action) {
+            case RESUME:
+                game.resume();
+                break;
+            case RESTART:
+                restartGame();
+                break;
+            case MAIN_MENU:
+                gameFrame.showScreen(GameFrame.SCREEN_MENU);
+                break;
+            default:
+                break;
+        }
+    }
+
+    // Highlights an overlay button and shows the hand cursor while the pointer is over one.
+    public void hoverAt(int mouseX, int mouseY) {
+        boolean overButton = false;
+        if (isOverlayShowing()) {
+            overButton = overlayRenderer.updateHover(game.getState(), mouseX, mouseY);
+        } else {
+            overlayRenderer.clearHover();
+        }
+        setCursor(Cursor.getPredefinedCursor(overButton ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
     }
 
     // ----- mouse (called by MouseInputHandler) -----
@@ -201,15 +248,22 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     // All changes happen here, never in paintComponent().
-    // The delta is measured every tick, but only added while PLAYING, so a pause never skips time.
-    // Phase 9 turns this into the Time Attack countdown.
+    // The time that passed since the last tick is measured every tick, but Game only counts it
+    // while the game is running. So a pause can never skip time, and after Resume the clock
+    // simply continues. Time Attack ends inside Game when the time limit is reached.
     private void update() {
         long now = System.nanoTime();
-        long delta = now - lastTickNanos;
+        long delta = Math.min(now - lastTickNanos, MAX_TICK_NANOS);
         lastTickNanos = now;
 
-        if (canPlay()) {
-            elapsedNanos += delta;
+        if (game == null) {
+            return;
+        }
+        game.addElapsedTime(delta);
+
+        // The game may have just ended or been paused: a piece in the air cannot be dropped any more.
+        if (!canPlay()) {
+            cancelDrag();
         }
     }
 
@@ -224,12 +278,12 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     private void resetTimeAndInput() {
-        elapsedNanos = 0;
         lastTickNanos = System.nanoTime();
         cancelDrag();
         selectedSlot = NO_SLOT;
         previewRow = START_PREVIEW_POSITION;
         previewCol = START_PREVIEW_POSITION;
+        overlayRenderer.clearHover();
     }
 
     // Moves the preview back inside the board if the piece would stick out.
@@ -263,9 +317,7 @@ public class GamePanel extends JPanel implements ActionListener {
             drawKeyboardPreview(g2);
         }
 
-        if (game.getState() == GameState.PAUSED) {
-            drawTemporaryPauseText(g2);
-        }
+        overlayRenderer.draw(g2, game);
     }
 
     // Draws the piece following the pointer and, on top of it, the green or red preview
@@ -301,15 +353,6 @@ public class GamePanel extends JPanel implements ActionListener {
         boardRenderer.drawSlotHighlight(g2, selectedSlot);
     }
 
-    // TEMPORARY: a plain pause message. Phase 9 replaces it with the real pause screen.
-    private void drawTemporaryPauseText(Graphics2D g2) {
-        g2.setColor(new Color(0, 0, 0, 150));
-        g2.fillRect(0, 0, getWidth(), getHeight());
-        g2.setColor(Color.WHITE);
-        DrawUtils.drawCenteredText(g2, "PAUSED", pauseFont, 0, 320, getWidth(), 70);
-        DrawUtils.drawCenteredText(g2, "Press P to resume", hintFont, 0, 395, getWidth(), 40);
-    }
-
     // The piece is held by its center. Its top-left corner decides the board cell.
     private int getDragCol(BlockPiece piece) {
         int left = dragX - piece.getWidth() * Constants.CELL_SIZE / 2;
@@ -323,19 +366,9 @@ public class GamePanel extends JPanel implements ActionListener {
 
     // Classic shows the time played, Time Attack shows the time left.
     private String getTimeText() {
-        long elapsedMillis = elapsedNanos / 1000000L;
         if (game.getMode() == GameMode.TIME_ATTACK) {
-            long totalMillis = Constants.TIME_ATTACK_SECONDS * 1000L;
-            long remainingMillis = Math.max(0, totalMillis - elapsedMillis);
-            return "TIME LEFT " + formatTime(remainingMillis);
+            return "TIME LEFT " + TimeFormat.formatRemaining(game.getRemainingMillis());
         }
-        return "TIME " + formatTime(elapsedMillis);
-    }
-
-    private String formatTime(long millis) {
-        long totalSeconds = millis / 1000;
-        long minutes = totalSeconds / 60;
-        long seconds = totalSeconds % 60;
-        return String.format("%02d:%02d", minutes, seconds);
+        return "TIME " + TimeFormat.formatElapsed(game.getElapsedMillis());
     }
 }
