@@ -8,6 +8,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.CardLayout;
 import java.awt.Font;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 // The window. It holds all screens on top of each other (CardLayout) and shows one at a time.
 // Screens ask the frame to switch, so they never need to know about each other.
@@ -34,6 +36,13 @@ public class GameFrame extends JFrame {
         screens.add(gamePanel, SCREEN_GAME);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // Save the best score when the player closes the window with the X button.
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                gamePanel.saveBestScores();
+            }
+        });
         setResizable(false);
         add(screens);
         pack();
@@ -58,6 +67,7 @@ public class GameFrame extends JFrame {
     }
 
     public void exitGame() {
+        gamePanel.saveBestScores();
         System.exit(0);
     }
 
