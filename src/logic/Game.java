@@ -11,8 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 // The rules of the game. It has no Swing code, so it can be tested from the console.
-// Time handling (pause-safe timer, Time Attack countdown) is added in Phase 9.
+// It also keeps the play time: the screen reports how much time passed, and the game
+// counts it only while it is running.
 public class Game {
+
+    private static final long NANOS_PER_MILLI = 1000000L;
 
     private final Board board;
     private final PieceGenerator pieceGenerator;
@@ -20,6 +23,7 @@ public class Game {
     private final GameMode mode;
     private BlockPiece[] tray;
     private GameState state;
+    private long elapsedNanos;
 
     public Game(GameMode mode) {
         this(mode, new PieceGenerator());
@@ -36,6 +40,7 @@ public class Game {
         this.scoreManager = new ScoreManager();
         this.tray = pieceGenerator.generateTray();
         this.state = GameState.PLAYING;
+        this.elapsedNanos = 0;
     }
 
     // ----- getters -----
@@ -50,6 +55,13 @@ public class Game {
 
     public GameState getState() {
         return state;
+    }
+
+    // True once the game has ended in any way (game over, won or failed).
+    public boolean isFinished() {
+        return state == GameState.GAME_OVER
+                || state == GameState.WON
+                || state == GameState.FAILED;
     }
 
     public ScoreManager getScoreManager() {
@@ -80,6 +92,43 @@ public class Game {
             }
         }
         return count;
+    }
+
+    // ----- time -----
+
+    // Adds play time (in nanoseconds). Only a running game counts time, so a pause can
+    // never skip or lose time. In Time Attack the game fails when the time limit is reached.
+    public void addElapsedTime(long nanos) {
+        if (state != GameState.PLAYING || nanos <= 0) {
+            return;
+        }
+        elapsedNanos += nanos;
+
+        if (mode == GameMode.TIME_ATTACK && elapsedNanos >= getTimeLimitNanos()) {
+            elapsedNanos = getTimeLimitNanos();
+            finishGame(GameState.FAILED);
+        }
+    }
+
+    public long getElapsedMillis() {
+        return elapsedNanos / NANOS_PER_MILLI;
+    }
+
+    // Time Attack: how much time is left. Classic has no time limit and returns 0.
+    public long getRemainingMillis() {
+        if (mode != GameMode.TIME_ATTACK) {
+            return 0;
+        }
+        return (getTimeLimitNanos() - elapsedNanos) / NANOS_PER_MILLI;
+    }
+
+    // True when a Time Attack game ended because the time ran out.
+    public boolean isTimeUp() {
+        return mode == GameMode.TIME_ATTACK && elapsedNanos >= getTimeLimitNanos();
+    }
+
+    private long getTimeLimitNanos() {
+        return Constants.TIME_ATTACK_SECONDS * 1000L * NANOS_PER_MILLI;
     }
 
     // ----- actions -----
@@ -131,6 +180,7 @@ public class Game {
         scoreManager.resetScore();
         tray = pieceGenerator.generateTray();
         state = GameState.PLAYING;
+        elapsedNanos = 0;
     }
 
     // ----- helpers -----
