@@ -21,7 +21,7 @@ public class MouseInputHandler extends MouseAdapter {
         if (e.getButton() != MouseEvent.BUTTON1) {
             return;   // only the left button is used
         }
-        gamePanel.requestFocusInWindow();   // keeps the keyboard working (Phase 8)
+        gamePanel.requestFocusInWindow();   // keeps the keyboard working
 
         int slot = GameLayout.findSlotAt(e.getX(), e.getY());
         if (slot >= 0) {
@@ -45,7 +45,7 @@ public class MouseInputHandler extends MouseAdapter {
         }
 
         if (GameLayout.getPauseButtonRect().contains(e.getX(), e.getY())) {
-            gamePanel.leaveToMenu();   // TEMPORARY: the real pause button comes in Phase 8
+            gamePanel.togglePause();
         } else if (GameLayout.getMuteButtonRect().contains(e.getX(), e.getY())) {
             gamePanel.toggleMute();
         }
