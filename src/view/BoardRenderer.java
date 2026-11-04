@@ -7,6 +7,7 @@ import model.CellPosition;
 import util.Constants;
 import util.ResourceLoader;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -80,6 +81,15 @@ public class BoardRenderer {
                 drawPiece(g2, piece, x, y, GameLayout.TRAY_CELL_SIZE);
             }
         }
+    }
+
+    // A white outline around the slot the player selected with the keyboard.
+    public void drawSlotHighlight(Graphics2D g2, int slotIndex) {
+        Rectangle area = GameLayout.getSlotRect(slotIndex);
+        g2.setColor(Color.WHITE);
+        g2.setStroke(new BasicStroke(3f));
+        g2.drawRoundRect(area.x, area.y, area.width, area.height, 20, 20);
+        g2.setStroke(new BasicStroke(1f));
     }
 
     // The placement preview: the board cells the piece would fill, green if the move is

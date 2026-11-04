@@ -1,5 +1,6 @@
 package view;
 
+import input.KeyInputHandler;
 import input.MouseInputHandler;
 import logic.Game;
 import logic.PlacementResult;
@@ -10,7 +11,9 @@ import util.Constants;
 
 import javax.swing.JPanel;
 import javax.swing.Timer;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
@@ -23,27 +26,35 @@ public class GamePanel extends JPanel implements ActionListener {
 
     private static final int TIMER_DELAY_MS = 16;
     private static final int NO_SLOT = -1;
+    private static final int START_PREVIEW_POSITION = 3;
 
-    private final GameFrame gameFrame;
     private final BoardRenderer boardRenderer;
     private final HudRenderer hudRenderer;
     private final Timer timer;
+    private final Font pauseFont;
+    private final Font hintFont;
 
     private Game game;
     private long elapsedNanos;
     private long lastTickNanos;
     private boolean soundMuted;   // Placeholder: SoundManager takes over in Phase 11
 
-    // Drag and drop state: which tray slot is being dragged and where the pointer is.
+    // Mouse drag state: which tray slot is being dragged and where the pointer is.
     private int dragSlot = NO_SLOT;
     private int dragX;
     private int dragY;
 
+    // Keyboard state: the selected tray slot and the board cell where its preview sits.
+    private int selectedSlot = NO_SLOT;
+    private int previewRow = START_PREVIEW_POSITION;
+    private int previewCol = START_PREVIEW_POSITION;
+
     public GamePanel(GameFrame gameFrame) {
-        this.gameFrame = gameFrame;
         this.boardRenderer = new BoardRenderer();
         this.hudRenderer = new HudRenderer(gameFrame.createUiFont(12f));
         this.timer = new Timer(TIMER_DELAY_MS, this);
+        this.pauseFont = gameFrame.createUiFont(56f);
+        this.hintFont = gameFrame.createUiFont(24f);
         this.soundMuted = false;
 
         setPreferredSize(new Dimension(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
@@ -52,13 +63,12 @@ public class GamePanel extends JPanel implements ActionListener {
         MouseInputHandler mouseHandler = new MouseInputHandler(this);
         addMouseListener(mouseHandler);
         addMouseMotionListener(mouseHandler);
+        addKeyListener(new KeyInputHandler(this));
     }
 
     public void startGame(GameMode mode) {
         game = new Game(mode);
-        elapsedNanos = 0;
-        lastTickNanos = System.nanoTime();
-        dragSlot = NO_SLOT;
+        resetTimeAndInput();
         if (!timer.isRunning()) {
             timer.start();
         }
@@ -66,10 +76,37 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public void stopGame() {
         timer.stop();
-        dragSlot = NO_SLOT;
+        cancelDrag();
+        selectedSlot = NO_SLOT;
     }
 
-    // ----- called by the mouse handler -----
+    // R key: a fresh game in the same mode.
+    public void restartGame() {
+        if (game == null) {
+            return;
+        }
+        game.restart();
+        resetTimeAndInput();
+    }
+
+    public void toggleMute() {
+        soundMuted = !soundMuted;
+    }
+
+    // P key and pause button. Pausing also drops a piece that is being dragged.
+    public void togglePause() {
+        if (game == null) {
+            return;
+        }
+        if (game.getState() == GameState.PLAYING) {
+            game.pause();
+            cancelDrag();
+        } else if (game.getState() == GameState.PAUSED) {
+            game.resume();
+        }
+    }
+
+    // ----- mouse (called by MouseInputHandler) -----
 
     public boolean isDragging() {
         return dragSlot != NO_SLOT;
@@ -80,6 +117,7 @@ public class GamePanel extends JPanel implements ActionListener {
         if (!canPlay() || game.getPiece(slotIndex) == null) {
             return;
         }
+        selectedSlot = NO_SLOT;   // the mouse takes over from the keyboard
         dragSlot = slotIndex;
         dragX = mouseX;
         dragY = mouseY;
@@ -113,13 +151,45 @@ public class GamePanel extends JPanel implements ActionListener {
         dragSlot = NO_SLOT;
     }
 
-    public void toggleMute() {
-        soundMuted = !soundMuted;
+    // ----- keyboard (called by KeyInputHandler) -----
+
+    // Keys 1, 2, 3. Ignored if the slot is empty or the game is not running.
+    public void selectSlot(int slotIndex) {
+        if (!canPlay() || isDragging()) {
+            return;
+        }
+        BlockPiece piece = game.getPiece(slotIndex);
+        if (piece == null) {
+            return;
+        }
+        selectedSlot = slotIndex;
+        keepPreviewInsideBoard(piece);
     }
 
-    // TEMPORARY: lets you leave the game screen until the real pause button arrives in Phase 8.
-    public void leaveToMenu() {
-        gameFrame.showScreen(GameFrame.SCREEN_MENU);
+    // Arrow keys. The preview stops at the edges of the board.
+    public void movePreview(int rowChange, int colChange) {
+        if (!canPlay() || selectedSlot == NO_SLOT) {
+            return;
+        }
+        BlockPiece piece = game.getPiece(selectedSlot);
+        if (piece == null) {
+            selectedSlot = NO_SLOT;
+            return;
+        }
+        previewRow += rowChange;
+        previewCol += colChange;
+        keepPreviewInsideBoard(piece);
+    }
+
+    // Enter and Space. A rejected move keeps the piece selected.
+    public void placeSelectedPiece() {
+        if (!canPlay() || selectedSlot == NO_SLOT) {
+            return;
+        }
+        PlacementResult result = tryPlacePiece(selectedSlot, previewRow, previewCol);
+        if (result.isPlaced()) {
+            selectedSlot = NO_SLOT;
+        }
     }
 
     // ----- game loop -----
@@ -131,7 +201,8 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     // All changes happen here, never in paintComponent().
-    // Phase 9 turns this simple time counting into the Time Attack countdown.
+    // The delta is measured every tick, but only added while PLAYING, so a pause never skips time.
+    // Phase 9 turns this into the Time Attack countdown.
     private void update() {
         long now = System.nanoTime();
         long delta = now - lastTickNanos;
@@ -152,6 +223,23 @@ public class GamePanel extends JPanel implements ActionListener {
         return game != null && game.getState() == GameState.PLAYING;
     }
 
+    private void resetTimeAndInput() {
+        elapsedNanos = 0;
+        lastTickNanos = System.nanoTime();
+        cancelDrag();
+        selectedSlot = NO_SLOT;
+        previewRow = START_PREVIEW_POSITION;
+        previewCol = START_PREVIEW_POSITION;
+    }
+
+    // Moves the preview back inside the board if the piece would stick out.
+    private void keepPreviewInsideBoard(BlockPiece piece) {
+        int maxRow = game.getBoard().getSize() - piece.getHeight();
+        int maxCol = game.getBoard().getSize() - piece.getWidth();
+        previewRow = Math.max(0, Math.min(previewRow, maxRow));
+        previewCol = Math.max(0, Math.min(previewCol, maxCol));
+    }
+
     // ----- drawing -----
 
     @Override
@@ -168,15 +256,21 @@ public class GamePanel extends JPanel implements ActionListener {
         hudRenderer.draw(g2, game.getScore(), game.getBestScore(), getTimeText(), soundMuted);
         boardRenderer.drawBoard(g2, game.getBoard());
         boardRenderer.drawTray(g2, game, dragSlot);
-        drawDragPreview(g2);
+
+        if (isDragging()) {
+            drawDragPreview(g2);
+        } else {
+            drawKeyboardPreview(g2);
+        }
+
+        if (game.getState() == GameState.PAUSED) {
+            drawTemporaryPauseText(g2);
+        }
     }
 
     // Draws the piece following the pointer and, on top of it, the green or red preview
     // of the board cells it would fill. It only asks canPlace() a question; it changes nothing.
     private void drawDragPreview(Graphics2D g2) {
-        if (!isDragging()) {
-            return;
-        }
         BlockPiece piece = game.getPiece(dragSlot);
         if (piece == null) {
             return;
@@ -190,6 +284,30 @@ public class GamePanel extends JPanel implements ActionListener {
         int col = getDragCol(piece);
         boolean valid = game.getBoard().canPlace(piece, row, col);
         boardRenderer.drawGhost(g2, game.getBoard(), piece, row, col, valid);
+    }
+
+    // The same green or red preview for the piece selected with the keyboard.
+    private void drawKeyboardPreview(Graphics2D g2) {
+        if (selectedSlot == NO_SLOT || !canPlay()) {
+            return;
+        }
+        BlockPiece piece = game.getPiece(selectedSlot);
+        if (piece == null) {
+            return;
+        }
+
+        boolean valid = game.getBoard().canPlace(piece, previewRow, previewCol);
+        boardRenderer.drawGhost(g2, game.getBoard(), piece, previewRow, previewCol, valid);
+        boardRenderer.drawSlotHighlight(g2, selectedSlot);
+    }
+
+    // TEMPORARY: a plain pause message. Phase 9 replaces it with the real pause screen.
+    private void drawTemporaryPauseText(Graphics2D g2) {
+        g2.setColor(new Color(0, 0, 0, 150));
+        g2.fillRect(0, 0, getWidth(), getHeight());
+        g2.setColor(Color.WHITE);
+        DrawUtils.drawCenteredText(g2, "PAUSED", pauseFont, 0, 320, getWidth(), 70);
+        DrawUtils.drawCenteredText(g2, "Press P to resume", hintFont, 0, 395, getWidth(), 40);
     }
 
     // The piece is held by its center. Its top-left corner decides the board cell.
