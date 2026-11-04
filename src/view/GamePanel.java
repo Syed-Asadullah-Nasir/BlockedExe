@@ -4,6 +4,7 @@ import input.KeyInputHandler;
 import input.MouseInputHandler;
 import logic.Game;
 import logic.PlacementResult;
+import logic.ScoreManager;
 import model.BlockPiece;
 import model.GameMode;
 import model.GameState;
@@ -36,9 +37,11 @@ public class GamePanel extends JPanel implements ActionListener {
     private final HudRenderer hudRenderer;
     private final OverlayRenderer overlayRenderer;
     private final Timer timer;
+    private final ScoreManager scoreManager;   // one for the whole program: keeps the best scores
 
     private Game game;
     private long lastTickNanos;
+    private boolean endSaved;   // the best score was already saved for the game that just ended
     private boolean soundMuted;   // Placeholder: SoundManager takes over in Phase 11
 
     // Mouse drag state: which tray slot is being dragged and where the pointer is.
@@ -57,6 +60,8 @@ public class GamePanel extends JPanel implements ActionListener {
         this.hudRenderer = new HudRenderer(gameFrame.createUiFont(12f));
         this.overlayRenderer = new OverlayRenderer(gameFrame.createUiFont(12f));
         this.timer = new Timer(TIMER_DELAY_MS, this);
+        this.scoreManager = new ScoreManager();
+        this.scoreManager.loadBestScores();
         this.soundMuted = false;
 
         setPreferredSize(new Dimension(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
@@ -69,17 +74,28 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void startGame(GameMode mode) {
-        game = new Game(mode);
+        game = new Game(mode, scoreManager);
         resetTimeAndInput();
         if (!timer.isRunning()) {
             timer.start();
         }
     }
 
+    // Called whenever the game screen is left (menu, exit).
     public void stopGame() {
+        saveBestScores();
         timer.stop();
         cancelDrag();
         selectedSlot = NO_SLOT;
+    }
+
+    // Counts the score of a game that is still running as a best score and writes the file.
+    // Also called when the window is closed. Does nothing if no best score changed.
+    public void saveBestScores() {
+        if (game != null) {
+            game.commitBestScore();
+        }
+        scoreManager.saveBestScoresIfChanged();
     }
 
     // R key and the Restart buttons: a fresh game in the same mode.
@@ -87,6 +103,7 @@ public class GamePanel extends JPanel implements ActionListener {
         if (game == null) {
             return;
         }
+        saveBestScores();   // do not lose the score of the game we are leaving
         game.restart();
         resetTimeAndInput();
     }
@@ -260,6 +277,7 @@ public class GamePanel extends JPanel implements ActionListener {
             return;
         }
         game.addElapsedTime(delta);
+        saveWhenGameEnds();
 
         // The game may have just ended or been paused: a piece in the air cannot be dropped any more.
         if (!canPlay()) {
@@ -273,12 +291,21 @@ public class GamePanel extends JPanel implements ActionListener {
         return game.tryPlace(slotIndex, row, col);
     }
 
+    // The game can end at any moment (last move, time out), so every tick checks once.
+    private void saveWhenGameEnds() {
+        if (game.isFinished() && !endSaved) {
+            scoreManager.saveBestScoresIfChanged();
+            endSaved = true;
+        }
+    }
+
     private boolean canPlay() {
         return game != null && game.getState() == GameState.PLAYING;
     }
 
     private void resetTimeAndInput() {
         lastTickNanos = System.nanoTime();
+        endSaved = false;
         cancelDrag();
         selectedSlot = NO_SLOT;
         previewRow = START_PREVIEW_POSITION;
@@ -307,7 +334,9 @@ public class GamePanel extends JPanel implements ActionListener {
             return;
         }
 
-        hudRenderer.draw(g2, game.getScore(), game.getBestScore(), getTimeText(), soundMuted);
+        // The crown follows the score as soon as it passes the old best score.
+        int bestToShow = Math.max(game.getBestScore(), game.getScore());
+        hudRenderer.draw(g2, game.getScore(), bestToShow, getTimeText(), soundMuted);
         boardRenderer.drawBoard(g2, game.getBoard());
         boardRenderer.drawTray(g2, game, dragSlot);
 

@@ -24,23 +24,36 @@ public class Game {
     private BlockPiece[] tray;
     private GameState state;
     private long elapsedNanos;
+    private boolean newBestReached;
 
     public Game(GameMode mode) {
         this(mode, new PieceGenerator());
     }
 
+    // The screen creates one ScoreManager and gives it to every new game, so the best
+    // scores stay in memory from one game to the next.
+    public Game(GameMode mode, ScoreManager scoreManager) {
+        this(mode, new PieceGenerator(), scoreManager);
+    }
+
     // The generator can be replaced in tests to get a fixed tray.
     public Game(GameMode mode, PieceGenerator pieceGenerator) {
-        if (mode == null || pieceGenerator == null) {
-            throw new IllegalArgumentException("mode and pieceGenerator are required");
+        this(mode, pieceGenerator, new ScoreManager());
+    }
+
+    public Game(GameMode mode, PieceGenerator pieceGenerator, ScoreManager scoreManager) {
+        if (mode == null || pieceGenerator == null || scoreManager == null) {
+            throw new IllegalArgumentException("mode, pieceGenerator and scoreManager are required");
         }
         this.mode = mode;
         this.pieceGenerator = pieceGenerator;
         this.board = new Board();
-        this.scoreManager = new ScoreManager();
+        this.scoreManager = scoreManager;
+        this.scoreManager.resetScore();   // a new game always starts at 0 points
         this.tray = pieceGenerator.generateTray();
         this.state = GameState.PLAYING;
         this.elapsedNanos = 0;
+        this.newBestReached = false;
     }
 
     // ----- getters -----
@@ -74,6 +87,17 @@ public class Game {
 
     public int getBestScore() {
         return scoreManager.getBestScore(mode);
+    }
+
+    // True if this game ended with a score that beat the old best score.
+    public boolean isNewBestReached() {
+        return newBestReached;
+    }
+
+    // Stores the current score as the best score if it is higher. The screen calls this when the
+    // player leaves or restarts a game that is still running. Returns true if a new best was set.
+    public boolean commitBestScore() {
+        return scoreManager.updateBestScore(mode);
     }
 
     // Returns the piece in this slot, or null if the slot is empty or the index is invalid.
@@ -181,6 +205,7 @@ public class Game {
         tray = pieceGenerator.generateTray();
         state = GameState.PLAYING;
         elapsedNanos = 0;
+        newBestReached = false;
     }
 
     // ----- helpers -----
@@ -241,7 +266,9 @@ public class Game {
 
     private void finishGame(GameState endState) {
         state = endState;
-        scoreManager.updateBestScore(mode);
+        if (commitBestScore()) {
+            newBestReached = true;
+        }
     }
 
     private boolean pieceFitsAnywhere(BlockPiece piece) {
