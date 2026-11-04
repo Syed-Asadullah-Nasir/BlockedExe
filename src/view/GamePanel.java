@@ -2,6 +2,8 @@ package view;
 
 import audio.SoundEffect;
 import audio.SoundManager;
+import effects.Drawable;
+import effects.VisualEffect;
 import input.KeyInputHandler;
 import input.MouseInputHandler;
 import logic.Game;
@@ -22,6 +24,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 // The gameplay screen. A Swing Timer calls actionPerformed about 60 times per second:
 // first update() changes the state, then repaint() asks Swing to draw it.
@@ -42,6 +46,8 @@ public class GamePanel extends JPanel implements ActionListener {
     private final Timer timer;
     private final ScoreManager scoreManager;   // one for the whole program: keeps the best scores
     private final SoundManager soundManager;   // one for the whole program: plays the sounds
+    private final EffectFactory effectFactory;
+    private final List<VisualEffect> effects = new ArrayList<>();   // animations that are playing now
 
     private Game game;
     private long lastTickNanos;
@@ -67,6 +73,7 @@ public class GamePanel extends JPanel implements ActionListener {
         this.scoreManager.loadBestScores();
         this.soundManager = new SoundManager();
         this.soundManager.loadSounds();
+        this.effectFactory = new EffectFactory(boardRenderer, gameFrame.createUiFont(22f));
 
         setPreferredSize(new Dimension(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
         setFocusable(true);
@@ -89,6 +96,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public void stopGame() {
         saveBestScores();
         timer.stop();
+        effects.clear();
         cancelDrag();
         selectedSlot = NO_SLOT;
     }
@@ -285,6 +293,7 @@ public class GamePanel extends JPanel implements ActionListener {
         }
         game.addElapsedTime(delta);
         handleGameEnd();
+        updateEffects(delta);
 
         // The game may have just ended or been paused: a piece in the air cannot be dropped any more.
         if (!canPlay()) {
@@ -293,11 +302,12 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     // The one place where a move is made. The PlacementResult tells what happened, so the
-    // sound is chosen here. Animations (Phase 12) will be started from here too.
+    // sound and the animations are chosen here.
     private PlacementResult tryPlacePiece(int slotIndex, int row, int col) {
         BlockPiece piece = game.getPiece(slotIndex);
         PlacementResult result = game.tryPlace(slotIndex, row, col);
         playMoveSound(result, piece, row, col);
+        effects.addAll(effectFactory.createEffects(result));
         return result;
     }
 
@@ -337,6 +347,19 @@ public class GamePanel extends JPanel implements ActionListener {
         }
     }
 
+    // Moves every animation forward and removes the finished ones.
+    // They stand still while the game is paused, and keep playing after a game ends.
+    private void updateEffects(long deltaNanos) {
+        if (game.getState() == GameState.PAUSED) {
+            return;
+        }
+        long deltaMillis = deltaNanos / 1000000L;
+        for (VisualEffect effect : effects) {
+            effect.update(deltaMillis);
+        }
+        effects.removeIf(VisualEffect::isFinished);
+    }
+
     private boolean canPlay() {
         return game != null && game.getState() == GameState.PLAYING;
     }
@@ -344,6 +367,7 @@ public class GamePanel extends JPanel implements ActionListener {
     private void resetTimeAndInput() {
         lastTickNanos = System.nanoTime();
         endHandled = false;
+        effects.clear();
         cancelDrag();
         selectedSlot = NO_SLOT;
         previewRow = START_PREVIEW_POSITION;
@@ -377,6 +401,11 @@ public class GamePanel extends JPanel implements ActionListener {
         hudRenderer.draw(g2, game.getScore(), bestToShow, getTimeText(), soundManager.isMuted());
         boardRenderer.drawBoard(g2, game.getBoard());
         boardRenderer.drawTray(g2, game, dragSlot);
+
+        // Each effect draws itself; GamePanel does not care which kind it is (Drawable).
+        for (Drawable effect : effects) {
+            effect.draw(g2);
+        }
 
         if (isDragging()) {
             drawDragPreview(g2);
