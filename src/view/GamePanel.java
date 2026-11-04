@@ -1,11 +1,14 @@
 package view;
 
+import audio.SoundEffect;
+import audio.SoundManager;
 import input.KeyInputHandler;
 import input.MouseInputHandler;
 import logic.Game;
 import logic.PlacementResult;
 import logic.ScoreManager;
 import model.BlockPiece;
+import model.CellPosition;
 import model.GameMode;
 import model.GameState;
 import util.Constants;
@@ -38,11 +41,11 @@ public class GamePanel extends JPanel implements ActionListener {
     private final OverlayRenderer overlayRenderer;
     private final Timer timer;
     private final ScoreManager scoreManager;   // one for the whole program: keeps the best scores
+    private final SoundManager soundManager;   // one for the whole program: plays the sounds
 
     private Game game;
     private long lastTickNanos;
-    private boolean endSaved;   // the best score was already saved for the game that just ended
-    private boolean soundMuted;   // Placeholder: SoundManager takes over in Phase 11
+    private boolean endHandled;   // the end of the current game (save + sound) was already dealt with
 
     // Mouse drag state: which tray slot is being dragged and where the pointer is.
     private int dragSlot = NO_SLOT;
@@ -62,7 +65,8 @@ public class GamePanel extends JPanel implements ActionListener {
         this.timer = new Timer(TIMER_DELAY_MS, this);
         this.scoreManager = new ScoreManager();
         this.scoreManager.loadBestScores();
-        this.soundMuted = false;
+        this.soundManager = new SoundManager();
+        this.soundManager.loadSounds();
 
         setPreferredSize(new Dimension(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
         setFocusable(true);
@@ -108,8 +112,9 @@ public class GamePanel extends JPanel implements ActionListener {
         resetTimeAndInput();
     }
 
+    // M key and mute button.
     public void toggleMute() {
-        soundMuted = !soundMuted;
+        soundManager.toggleMute();
     }
 
     // P key and pause button. Pausing also drops a piece that is being dragged.
@@ -185,6 +190,7 @@ public class GamePanel extends JPanel implements ActionListener {
         dragSlot = slotIndex;
         dragX = mouseX;
         dragY = mouseY;
+        soundManager.play(SoundEffect.SELECT);
     }
 
     public void moveDrag(int mouseX, int mouseY) {
@@ -228,6 +234,7 @@ public class GamePanel extends JPanel implements ActionListener {
         }
         selectedSlot = slotIndex;
         keepPreviewInsideBoard(piece);
+        soundManager.play(SoundEffect.SELECT);
     }
 
     // Arrow keys. The preview stops at the edges of the board.
@@ -277,7 +284,7 @@ public class GamePanel extends JPanel implements ActionListener {
             return;
         }
         game.addElapsedTime(delta);
-        saveWhenGameEnds();
+        handleGameEnd();
 
         // The game may have just ended or been paused: a piece in the air cannot be dropped any more.
         if (!canPlay()) {
@@ -285,17 +292,48 @@ public class GamePanel extends JPanel implements ActionListener {
         }
     }
 
-    // The one place where a move is made. Sounds (Phase 11) and animations (Phase 12)
-    // will be started from here, using the PlacementResult.
+    // The one place where a move is made. The PlacementResult tells what happened, so the
+    // sound is chosen here. Animations (Phase 12) will be started from here too.
     private PlacementResult tryPlacePiece(int slotIndex, int row, int col) {
-        return game.tryPlace(slotIndex, row, col);
+        BlockPiece piece = game.getPiece(slotIndex);
+        PlacementResult result = game.tryPlace(slotIndex, row, col);
+        playMoveSound(result, piece, row, col);
+        return result;
     }
 
-    // The game can end at any moment (last move, time out), so every tick checks once.
-    private void saveWhenGameEnds() {
-        if (game.isFinished() && !endSaved) {
-            scoreManager.saveBestScoresIfChanged();
-            endSaved = true;
+    // A placed piece makes the place sound, or the clear sound if it completed lines.
+    // A rejected drop on the board makes the invalid sound. Letting go of the piece somewhere
+    // else (for example back over the tray) just cancels the move quietly.
+    private void playMoveSound(PlacementResult result, BlockPiece piece, int row, int col) {
+        if (result.isPlaced()) {
+            soundManager.play(result.getLinesCleared() > 0 ? SoundEffect.CLEAR : SoundEffect.PLACE);
+        } else if (piece != null && touchesBoard(piece, row, col)) {
+            soundManager.play(SoundEffect.INVALID);
+        }
+    }
+
+    // True if at least one cell of the piece would be on the board at this position.
+    private boolean touchesBoard(BlockPiece piece, int row, int col) {
+        for (CellPosition offset : piece.getCells()) {
+            if (game.getBoard().isInside(row + offset.getRow(), col + offset.getCol())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // The game can end at any moment (last move, time out), so every tick checks.
+    // The end is dealt with once: the best score is saved and, for a game over or a failure,
+    // the invalid sound is played. A win has no sound of its own.
+    private void handleGameEnd() {
+        if (!game.isFinished() || endHandled) {
+            return;
+        }
+        endHandled = true;
+        scoreManager.saveBestScoresIfChanged();
+
+        if (game.getState() != GameState.WON) {
+            soundManager.play(SoundEffect.INVALID);
         }
     }
 
@@ -305,7 +343,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
     private void resetTimeAndInput() {
         lastTickNanos = System.nanoTime();
-        endSaved = false;
+        endHandled = false;
         cancelDrag();
         selectedSlot = NO_SLOT;
         previewRow = START_PREVIEW_POSITION;
@@ -336,7 +374,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
         // The crown follows the score as soon as it passes the old best score.
         int bestToShow = Math.max(game.getBestScore(), game.getScore());
-        hudRenderer.draw(g2, game.getScore(), bestToShow, getTimeText(), soundMuted);
+        hudRenderer.draw(g2, game.getScore(), bestToShow, getTimeText(), soundManager.isMuted());
         boardRenderer.drawBoard(g2, game.getBoard());
         boardRenderer.drawTray(g2, game, dragSlot);
 
