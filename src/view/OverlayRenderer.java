@@ -131,6 +131,10 @@ public class OverlayRenderer {
         g2.setColor(LIGHT_TEXT);
         DrawUtils.drawCenteredText(g2, "TIME  " + TimeFormat.formatElapsed(game.getElapsedMillis()), hintFont,
                 0, END_CARD_Y + 295, WINDOW_WIDTH, 36);
+        if (game.isNewBestReached()) {
+            g2.setColor(GOLD);
+            DrawUtils.drawCenteredText(g2, "NEW BEST!", textFont, 0, END_CARD_Y + 333, WINDOW_WIDTH, 40);
+        }
 
         drawButtons(g2, endButtons);
     }
