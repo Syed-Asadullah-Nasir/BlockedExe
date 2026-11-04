@@ -133,6 +133,22 @@ public class BoardRenderer {
         }
     }
 
+    // The block picture of a colour, or null if it could not be loaded. Used by the effects.
+    public BufferedImage getBlockImage(int colorIndex) {
+        if (colorIndex < 1 || colorIndex > Constants.COLOR_COUNT) {
+            return null;
+        }
+        return blockImages[colorIndex];
+    }
+
+    // The plain colour used when the block picture is missing. Used by the effects.
+    public Color getBlockColor(int colorIndex) {
+        if (colorIndex < 1 || colorIndex > Constants.COLOR_COUNT) {
+            return null;
+        }
+        return FALLBACK_COLORS[colorIndex];
+    }
+
     private void drawEmptyCell(Graphics2D g2, int x, int y, int size) {
         g2.setColor(EMPTY_CELL_COLOR);
         g2.fillRoundRect(x + 1, y + 1, size - 2, size - 2, 8, 8);
