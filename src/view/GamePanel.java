@@ -24,6 +24,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,6 +84,14 @@ public class GamePanel extends JPanel implements ActionListener {
         addMouseListener(mouseHandler);
         addMouseMotionListener(mouseHandler);
         addKeyListener(new KeyInputHandler(this));
+        // A click on the game always gives the keyboard focus back to the game,
+        // so the keys keep working after the player used the mouse (or came back from another window).
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                requestFocusInWindow();
+            }
+        });
     }
 
     public void startGame(GameMode mode) {
