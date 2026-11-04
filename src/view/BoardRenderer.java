@@ -1,9 +1,9 @@
 package view;
 
+import logic.Game;
 import model.BlockPiece;
 import model.Board;
 import model.CellPosition;
-import logic.Game;
 import util.Constants;
 import util.ResourceLoader;
 
@@ -18,6 +18,8 @@ public class BoardRenderer {
     private static final Color BOARD_COLOR = new Color(38, 40, 72);
     private static final Color EMPTY_CELL_COLOR = new Color(55, 58, 100);
     private static final Color SLOT_FALLBACK_COLOR = new Color(30, 38, 85, 200);
+    private static final Color GHOST_VALID_COLOR = new Color(90, 230, 120, 150);
+    private static final Color GHOST_INVALID_COLOR = new Color(235, 70, 70, 150);
 
     // Used when a block image is missing. Index 0 (empty) is unused.
     private static final Color[] FALLBACK_COLORS = {
@@ -49,8 +51,8 @@ public class BoardRenderer {
 
         for (int row = 0; row < board.getSize(); row++) {
             for (int col = 0; col < board.getSize(); col++) {
-                int x = area.x + col * Constants.CELL_SIZE;
-                int y = area.y + row * Constants.CELL_SIZE;
+                int x = GameLayout.getCellX(col);
+                int y = GameLayout.getCellY(row);
                 int colorIndex = board.getCell(row, col);
 
                 if (colorIndex == Constants.EMPTY_CELL) {
@@ -63,13 +65,14 @@ public class BoardRenderer {
     }
 
     // Draws the three slots and the pieces that are still in the tray.
-    public void drawTray(Graphics2D g2, Game game) {
+    // The piece in hiddenSlot is not drawn, because the player is dragging it (use -1 for none).
+    public void drawTray(Graphics2D g2, Game game, int hiddenSlot) {
         for (int slot = 0; slot < Constants.TRAY_SIZE; slot++) {
             Rectangle area = GameLayout.getSlotRect(slot);
             drawSlotBackground(g2, area);
 
             BlockPiece piece = game.getPiece(slot);
-            if (piece != null) {
+            if (piece != null && slot != hiddenSlot) {
                 int pieceWidth = piece.getWidth() * GameLayout.TRAY_CELL_SIZE;
                 int pieceHeight = piece.getHeight() * GameLayout.TRAY_CELL_SIZE;
                 int x = area.x + (area.width - pieceWidth) / 2;
@@ -79,8 +82,22 @@ public class BoardRenderer {
         }
     }
 
+    // The placement preview: the board cells the piece would fill, green if the move is
+    // allowed and red if it is not. Cells outside the board are not drawn.
+    public void drawGhost(Graphics2D g2, Board board, BlockPiece piece, int row, int col, boolean valid) {
+        g2.setColor(valid ? GHOST_VALID_COLOR : GHOST_INVALID_COLOR);
+        for (CellPosition offset : piece.getCells()) {
+            int cellRow = row + offset.getRow();
+            int cellCol = col + offset.getCol();
+            if (board.isInside(cellRow, cellCol)) {
+                int x = GameLayout.getCellX(cellCol);
+                int y = GameLayout.getCellY(cellRow);
+                g2.fillRoundRect(x + 1, y + 1, Constants.CELL_SIZE - 2, Constants.CELL_SIZE - 2, 8, 8);
+            }
+        }
+    }
+
     // x and y are the top-left corner of the piece in pixels.
-    // Public, because the drag preview (Phase 7) draws pieces too.
     public void drawPiece(Graphics2D g2, BlockPiece piece, int x, int y, int cellSize) {
         for (CellPosition offset : piece.getCells()) {
             int cellX = x + offset.getCol() * cellSize;
