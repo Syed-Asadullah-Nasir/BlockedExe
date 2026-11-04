@@ -112,6 +112,20 @@ public class Game {
         return false;
     }
 
+    // Only a running game can be paused.
+    public void pause() {
+        if (state == GameState.PLAYING) {
+            state = GameState.PAUSED;
+        }
+    }
+
+    // Only a paused game can be resumed.
+    public void resume() {
+        if (state == GameState.PAUSED) {
+            state = GameState.PLAYING;
+        }
+    }
+
     public void restart() {
         board.reset();
         scoreManager.resetScore();
