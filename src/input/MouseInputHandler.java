@@ -25,8 +25,13 @@ public class MouseInputHandler extends MouseAdapter {
 
         int slot = GameLayout.findSlotAt(e.getX(), e.getY());
         if (slot >= 0) {
-            gamePanel.startDrag(slot, e.getX(), e.getY());
+            gamePanel.startDrag(slot, e.getX(), e.getY());   // ignored if the game is not running
         }
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        gamePanel.hoverAt(e.getX(), e.getY());
     }
 
     @Override
@@ -39,6 +44,13 @@ public class MouseInputHandler extends MouseAdapter {
         if (e.getButton() != MouseEvent.BUTTON1) {
             return;
         }
+
+        // While the pause or end screen is showing, only its buttons react.
+        if (gamePanel.isOverlayShowing()) {
+            gamePanel.clickOverlay(e.getX(), e.getY());
+            return;
+        }
+
         if (gamePanel.isDragging()) {
             gamePanel.dropDrag(e.getX(), e.getY());
             return;
