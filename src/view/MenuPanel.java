@@ -21,11 +21,11 @@ public class MenuPanel extends ScreenPanel {
         subtitleFont = gameFrame.createUiFont(22f);
 
         playButton = new ImageButton(
-                ResourceLoader.loadImage(Constants.IMAGE_PLAY_ICON), "PLAY", 210, 270, 180, 180, false);
+                ResourceLoader.loadFirstImage(Constants.IMAGE_PLAY_ICON_PATHS), "PLAY", 210, 270, 180, 180, false);
         instructionsButton = new ImageButton(
-                ResourceLoader.loadImage(Constants.IMAGE_INSTRUCTIONS_BUTTON), "INSTRUCTIONS", 150, 500, 300, 80);
+                ResourceLoader.loadFirstImage(Constants.IMAGE_INSTRUCTIONS_BUTTON_PATHS), "INSTRUCTIONS", 150, 500, 300, 80);
         exitButton = new ImageButton(
-                ResourceLoader.loadImage(Constants.IMAGE_EXIT_BUTTON), "EXIT", 150, 600, 300, 80);
+                ResourceLoader.loadFirstImage(Constants.IMAGE_EXIT_BUTTON_PATHS), "EXIT", 150, 600, 300, 80);
 
         addButton(playButton);
         addButton(instructionsButton);
