@@ -9,15 +9,18 @@ import java.awt.image.BufferedImage;
 
 // A clickable button. Its image is only the BACKGROUND, so the label is drawn on top of it.
 // Pass showLabelOnImage = false for an image that already shows what it is (like the play icon).
-// It grows a little when the mouse is over it.
-// If the image could not be loaded (null), a plain rounded button with the label is drawn instead.
+// The button is exactly as big as its visible image (fitted into the box given to the constructor),
+// so the label, the hover effect and the click area all match what the player sees.
+// If the image could not be loaded (null), a plain 3D-looking button with the label is drawn instead.
 public class ImageButton {
 
-    private static final Color NORMAL_COLOR = new Color(70, 105, 210);
-    private static final Color HOVER_COLOR = new Color(100, 140, 240);
-
+    private static final Color DEFAULT_FALLBACK_COLOR = new Color(70, 140, 235);
+    // Proportions of the buttons in the asset pack (width : height), used when the image is missing.
+    private static final int FALLBACK_WIDTH = 340;
+    private static final int FALLBACK_HEIGHT = 100;
     // The text height is a part of the button height, so big and small buttons both look right.
     private static final float LABEL_SIZE_RATIO = 0.4f;
+    private static final float MAX_LABEL_SIZE = 36f;
     // The buttons have a thick lip at the bottom, so the text is lifted a little to sit on the face.
     private static final int LIP_DIVISOR = 20;
 
@@ -26,6 +29,7 @@ public class ImageButton {
     private final Rectangle bounds;
     private final boolean showLabelOnImage;
     private final boolean darkLabel;   // dark text on a light image, white text on a dark one
+    private Color fallbackColor = DEFAULT_FALLBACK_COLOR;
     private boolean hovered;
 
     public ImageButton(BufferedImage image, String label, int x, int y, int width, int height) {
@@ -36,10 +40,27 @@ public class ImageButton {
                        boolean showLabelOnImage) {
         this.image = image;
         this.label = label;
-        this.bounds = new Rectangle(x, y, width, height);
+        this.bounds = createBounds(image, new Rectangle(x, y, width, height));
         this.showLabelOnImage = showLabelOnImage;
         this.darkLabel = DrawUtils.isBright(image);
         this.hovered = false;
+    }
+
+    // The space the button really takes: the image (or a button-shaped box) fitted into the given box.
+    // A square box (like the play button) stays as it is.
+    private static Rectangle createBounds(BufferedImage image, Rectangle box) {
+        if (image != null) {
+            return DrawUtils.fitRect(box, image.getWidth(), image.getHeight());
+        }
+        if (box.width > 2 * box.height) {
+            return DrawUtils.fitRect(box, FALLBACK_WIDTH, FALLBACK_HEIGHT);
+        }
+        return box;
+    }
+
+    // The colour of the plain button that is drawn when the image is missing.
+    public void setFallbackColor(Color color) {
+        this.fallbackColor = color;
     }
 
     public boolean contains(int pointX, int pointY) {
@@ -61,26 +82,32 @@ public class ImageButton {
         }
 
         if (image != null) {
-            DrawUtils.drawFitted(g2, image, area.x, area.y, area.width, area.height);
-            if (showLabelOnImage) {
-                DrawUtils.drawButtonLabel(g2, label, labelFont.deriveFont(area.height * LABEL_SIZE_RATIO),
-                        darkLabel, area.x, area.y - area.height / LIP_DIVISOR, area.width, area.height);
-            }
+            g2.drawImage(image, area.x, area.y, area.width, area.height, null);
         } else {
-            drawFallback(g2, area, labelFont);
+            drawFallbackShape(g2, area);
+        }
+
+        if (image == null || showLabelOnImage) {
+            Font font = labelFont.deriveFont(Math.min(MAX_LABEL_SIZE, area.height * LABEL_SIZE_RATIO));
+            boolean dark = image != null && darkLabel;
+            DrawUtils.drawButtonLabel(g2, label, font, dark,
+                    area.x, area.y - area.height / LIP_DIVISOR, area.width, area.height);
         }
     }
 
-    private void drawFallback(Graphics2D g2, Rectangle area, Font labelFont) {
-        g2.setColor(hovered ? HOVER_COLOR : NORMAL_COLOR);
-        g2.fillRoundRect(area.x, area.y, area.width, area.height, 24, 24);
+    // A rounded button with a darker lip at the bottom, like the buttons of the asset pack.
+    private void drawFallbackShape(Graphics2D g2, Rectangle area) {
+        int arc = Math.min(area.height / 3, 28);
+        int lip = Math.max(4, area.height / 10);
+        Color face = hovered ? fallbackColor.brighter() : fallbackColor;
 
-        g2.setColor(Color.WHITE);
-        g2.setStroke(new BasicStroke(3f));
-        g2.drawRoundRect(area.x, area.y, area.width, area.height, 24, 24);
+        g2.setColor(fallbackColor.darker().darker());
+        g2.fillRoundRect(area.x, area.y + lip, area.width, area.height - lip, arc, arc);
+        g2.setColor(face);
+        g2.fillRoundRect(area.x, area.y, area.width, area.height - lip, arc, arc);
+        g2.setColor(new Color(255, 255, 255, 170));
+        g2.setStroke(new BasicStroke(2f));
+        g2.drawRoundRect(area.x + 1, area.y + 1, area.width - 3, area.height - lip - 3, arc, arc);
         g2.setStroke(new BasicStroke(1f));
-
-        DrawUtils.drawButtonLabel(g2, label, labelFont.deriveFont(area.height * LABEL_SIZE_RATIO),
-                false, area.x, area.y, area.width, area.height);
     }
 }
