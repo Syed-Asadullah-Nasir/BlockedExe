@@ -59,6 +59,11 @@ public class OverlayRenderer {
     private final OverlayAction[] endActions = {
             OverlayAction.RESTART, OverlayAction.MAIN_MENU};
 
+    // Colours of the plain buttons that are drawn when a button image is missing.
+    private static final Color GREEN = new Color(70, 185, 90);
+    private static final Color ORANGE = new Color(240, 150, 40);
+    private static final Color RED = new Color(235, 70, 100);
+
     public OverlayRenderer(Font baseFont) {
         titleFont = baseFont.deriveFont(54f);
         textFont = baseFont.deriveFont(32f);
@@ -68,19 +73,20 @@ public class OverlayRenderer {
         crossImage = ResourceLoader.loadImage(Constants.IMAGE_GAME_OVER_CROSS);
         winImage = ResourceLoader.loadImage(Constants.IMAGE_WIN_CHECK);
 
-        BufferedImage resumeImage = ResourceLoader.loadImage(Constants.IMAGE_RESUME_BUTTON);
-        // restart_icon.png is an icon, not a button background, so Restart uses the Resume background.
-        BufferedImage restartImage = resumeImage;
+        // restart_icon.png is an icon, not a button background, so it is not used here.
+        // If a button image is missing, a plain button in the given colour is drawn instead.
+        BufferedImage resumeImage = ResourceLoader.loadFirstImage(Constants.IMAGE_RESUME_BUTTON_PATHS);
+        BufferedImage restartImage = ResourceLoader.loadFirstImage(Constants.IMAGE_RESTART_BUTTON_PATHS);
         BufferedImage menuImage = ResourceLoader.loadImage(Constants.IMAGE_MENU_BUTTON);
 
         pauseButtons = new ImageButton[]{
-                createButton(resumeImage, "RESUME", PAUSE_BUTTON_Y),
-                createButton(restartImage, "RESTART", PAUSE_BUTTON_Y + PAUSE_BUTTON_STEP),
-                createButton(menuImage, "MAIN MENU", PAUSE_BUTTON_Y + 2 * PAUSE_BUTTON_STEP)
+                createButton(resumeImage, "RESUME", PAUSE_BUTTON_Y, GREEN),
+                createButton(restartImage, "RESTART", PAUSE_BUTTON_Y + PAUSE_BUTTON_STEP, ORANGE),
+                createButton(menuImage, "MAIN MENU", PAUSE_BUTTON_Y + 2 * PAUSE_BUTTON_STEP, RED)
         };
         endButtons = new ImageButton[]{
-                createButton(restartImage, "RESTART", END_BUTTON_Y),
-                createButton(menuImage, "MAIN MENU", END_BUTTON_Y + END_BUTTON_STEP)
+                createButton(restartImage, "RESTART", END_BUTTON_Y, ORANGE),
+                createButton(menuImage, "MAIN MENU", END_BUTTON_Y + END_BUTTON_STEP, RED)
         };
     }
 
@@ -243,7 +249,9 @@ public class OverlayRenderer {
         return state == GameState.PAUSED ? pauseActions : endActions;
     }
 
-    private ImageButton createButton(BufferedImage image, String label, int y) {
-        return new ImageButton(image, label, BUTTON_X, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+    private ImageButton createButton(BufferedImage image, String label, int y, Color fallbackColor) {
+        ImageButton button = new ImageButton(image, label, BUTTON_X, y, BUTTON_WIDTH, BUTTON_HEIGHT);
+        button.setFallbackColor(fallbackColor);
+        return button;
     }
 }
