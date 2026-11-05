@@ -65,8 +65,19 @@ public final class Constants {
     public static final String IMAGE_TIME_ATTACK_BUTTON = "images/time-attack/time-attack_button.png";
     public static final String IMAGE_WIN_CHECK = "images/win/win_check.png";
 
-    // Font path
+    // Font paths. The first file that exists is used, so the font works whatever the
+    // file or folder is called (the asset pack names it "Kenney Future Narrow.ttf").
     public static final String FONT_PATH = "fonts/kenney_future_narrow.ttf";
+    public static final String[] FONT_PATHS = {
+            "fonts/kenney_future_narrow.ttf",
+            "fonts/Kenney Future Narrow.ttf",
+            "fonts/Kenney_Future_Narrow.ttf",
+            "fonts/KenneyFutureNarrow.ttf",
+            "fonts/Kenney Future Narrow.otf",
+            "Font/Kenney Future Narrow.ttf",
+            "font/Kenney Future Narrow.ttf",
+            "Fonts/Kenney Future Narrow.ttf"
+    };
 
     // Sound paths
     public static final String SOUND_CLEAR = "sounds/clear.wav";
