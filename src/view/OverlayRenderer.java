@@ -25,6 +25,7 @@ public class OverlayRenderer {
     private static final int WINDOW_WIDTH = Constants.WINDOW_WIDTH;
     private static final int CARD_X = 70;
     private static final int CARD_WIDTH = 460;
+    private static final int CARD_TEXT_PADDING = 28;   // space between the card edge and the text
     private static final int BUTTON_WIDTH = 280;
     private static final int BUTTON_HEIGHT = 70;
     private static final int BUTTON_X = (WINDOW_WIDTH - BUTTON_WIDTH) / 2;
@@ -114,9 +115,9 @@ public class OverlayRenderer {
         drawCard(g2, PAUSE_CARD_Y, PAUSE_CARD_HEIGHT);
 
         g2.setColor(Color.WHITE);
-        DrawUtils.drawCenteredText(g2, "PAUSED", titleFont, 0, PAUSE_CARD_Y + 25, WINDOW_WIDTH, 70);
+        drawCardText(g2, "PAUSED", titleFont, PAUSE_CARD_Y + 25, 70);
         g2.setColor(LIGHT_TEXT);
-        DrawUtils.drawCenteredText(g2, "Press P to resume", hintFont, 0, PAUSE_CARD_Y + 100, WINDOW_WIDTH, 32);
+        drawCardText(g2, "Press P to resume", hintFont, PAUSE_CARD_Y + 100, 32);
 
         drawButtons(g2, pauseButtons);
     }
@@ -128,20 +129,17 @@ public class OverlayRenderer {
         drawResultIcon(g2, won, (WINDOW_WIDTH - END_ICON_SIZE) / 2, END_CARD_Y + 25, END_ICON_SIZE);
 
         g2.setColor(Color.WHITE);
-        DrawUtils.drawCenteredText(g2, getEndTitle(game), titleFont, 0, END_CARD_Y + 125, WINDOW_WIDTH, 70);
+        drawCardText(g2, getEndTitle(game), titleFont, END_CARD_Y + 125, 70);
 
         g2.setColor(Color.WHITE);
-        DrawUtils.drawCenteredText(g2, "SCORE  " + game.getScore(), textFont,
-                0, END_CARD_Y + 205, WINDOW_WIDTH, 40);
+        drawCardText(g2, "SCORE  " + game.getScore(), textFont, END_CARD_Y + 205, 40);
         g2.setColor(GOLD);
-        DrawUtils.drawCenteredText(g2, "BEST  " + game.getBestScore(), textFont,
-                0, END_CARD_Y + 250, WINDOW_WIDTH, 40);
+        drawCardText(g2, "BEST  " + game.getBestScore(), textFont, END_CARD_Y + 250, 40);
         g2.setColor(LIGHT_TEXT);
-        DrawUtils.drawCenteredText(g2, "TIME  " + TimeFormat.formatElapsed(game.getElapsedMillis()), hintFont,
-                0, END_CARD_Y + 295, WINDOW_WIDTH, 36);
+        drawCardText(g2, "TIME  " + TimeFormat.formatElapsed(game.getElapsedMillis()), hintFont, END_CARD_Y + 295, 36);
         if (game.isNewBestReached()) {
             g2.setColor(GOLD);
-            DrawUtils.drawCenteredText(g2, "NEW BEST!", textFont, 0, END_CARD_Y + 333, WINDOW_WIDTH, 40);
+            drawCardText(g2, "NEW BEST!", textFont, END_CARD_Y + 333, 40);
         }
 
         drawButtons(g2, endButtons);
@@ -156,6 +154,12 @@ public class OverlayRenderer {
             default:
                 return "GAME OVER";
         }
+    }
+
+    // Centered text that is never wider than the card: a long text gets smaller instead of overflowing.
+    private void drawCardText(Graphics2D g2, String text, Font font, int y, int height) {
+        DrawUtils.drawCenteredText(g2, text, font, CARD_X + CARD_TEXT_PADDING, y,
+                CARD_WIDTH - 2 * CARD_TEXT_PADDING, height);
     }
 
     private void drawCard(Graphics2D g2, int y, int height) {
