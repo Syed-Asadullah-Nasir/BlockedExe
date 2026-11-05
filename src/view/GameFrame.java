@@ -21,7 +21,7 @@ public class GameFrame extends JFrame {
     public static final String SCREEN_GAME = "game";
 
     // The custom font is loaded once here. If it is missing, a default font is used.
-    private final Font uiBaseFont = ResourceLoader.loadFont(Constants.FONT_PATH, 12f);
+    private final Font uiBaseFont = ResourceLoader.loadFirstFont(Constants.FONT_PATHS, 12f);
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel screens = new JPanel(cardLayout);
     private final GamePanel gamePanel;
