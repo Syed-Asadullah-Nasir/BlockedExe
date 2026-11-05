@@ -4,6 +4,7 @@ import java.awt.Font;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
@@ -19,6 +20,24 @@ public final class DrawUtils {
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    }
+
+    // The rectangle an image of this size takes when it is fitted inside the box:
+    // same proportions, centered. This is where drawFitted really draws.
+    public static Rectangle fitRect(Rectangle box, int imageWidth, int imageHeight) {
+        double scale = Math.min((double) box.width / imageWidth, (double) box.height / imageHeight);
+        int width = (int) Math.round(imageWidth * scale);
+        int height = (int) Math.round(imageHeight * scale);
+        return new Rectangle(box.x + (box.width - width) / 2, box.y + (box.height - height) / 2, width, height);
+    }
+
+    // Returns the font, made smaller if needed, so the text is not wider than maxWidth.
+    public static Font fitFont(Graphics2D g2, String text, Font font, int maxWidth) {
+        Font result = font;
+        while (result.getSize() > 8 && g2.getFontMetrics(result).stringWidth(text) > maxWidth) {
+            result = result.deriveFont(result.getSize2D() - 1f);
+        }
+        return result;
     }
 
     // Draws the image inside the box, keeping its proportions and centering it.
@@ -39,7 +58,7 @@ public final class DrawUtils {
     // Centers the text horizontally and vertically inside the box.
     public static void drawCenteredText(Graphics2D g2, String text, Font font,
                                         int x, int y, int width, int height) {
-        g2.setFont(font);
+        g2.setFont(fitFont(g2, text, font, width));   // a text wider than its box gets smaller
         FontMetrics metrics = g2.getFontMetrics();
         int textX = x + (width - metrics.stringWidth(text)) / 2;
         int textY = y + (height - metrics.getHeight()) / 2 + metrics.getAscent();
@@ -82,12 +101,7 @@ public final class DrawUtils {
     // White text gets a soft shadow so it stays readable on any button colour.
     public static void drawButtonLabel(Graphics2D g2, String text, Font font, boolean darkText,
                                        int x, int y, int width, int height) {
-        Font useFont = font;
-        g2.setFont(useFont);
-        while (g2.getFontMetrics().stringWidth(text) > width - 30 && useFont.getSize() > 10) {
-            useFont = useFont.deriveFont(useFont.getSize2D() - 1f);
-            g2.setFont(useFont);
-        }
+        Font useFont = fitFont(g2, text, font, width * 85 / 100);
 
         if (!darkText) {
             g2.setColor(new Color(0, 0, 0, 110));
