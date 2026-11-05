@@ -22,11 +22,11 @@ public class ModePanel extends ScreenPanel {
         captionFont = gameFrame.createUiFont(20f);
 
         classicButton = new ImageButton(
-                ResourceLoader.loadImage(Constants.IMAGE_CLASSIC_BUTTON), "CLASSIC", 140, 230, 320, 90);
+                ResourceLoader.loadFirstImage(Constants.IMAGE_CLASSIC_BUTTON_PATHS), "CLASSIC", 140, 230, 320, 90);
         timeAttackButton = new ImageButton(
-                ResourceLoader.loadImage(Constants.IMAGE_TIME_ATTACK_BUTTON), "TIME ATTACK", 140, 390, 320, 90);
+                ResourceLoader.loadFirstImage(Constants.IMAGE_TIME_ATTACK_BUTTON_PATHS), "TIME ATTACK", 140, 390, 320, 90);
         backButton = new ImageButton(
-                ResourceLoader.loadImage(Constants.IMAGE_BACK_BUTTON), "BACK", 210, 580, 180, 70);
+                ResourceLoader.loadFirstImage(Constants.IMAGE_BACK_BUTTON_PATHS), "BACK", 210, 580, 180, 70);
 
         addButton(classicButton);
         addButton(timeAttackButton);
