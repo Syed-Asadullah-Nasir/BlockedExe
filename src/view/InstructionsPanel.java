@@ -22,10 +22,10 @@ public class InstructionsPanel extends ScreenPanel {
         super(gameFrame);
         titleFont = gameFrame.createUiFont(44f);
         headingFont = gameFrame.createUiFont(26f);
-        lineFont = gameFrame.createUiFont(20f);
+        lineFont = gameFrame.createUiFont(17f);
 
         backButton = new ImageButton(
-                ResourceLoader.loadImage(Constants.IMAGE_BACK_BUTTON), "BACK", 210, 690, 180, 70);
+                ResourceLoader.loadFirstImage(Constants.IMAGE_BACK_BUTTON_PATHS), "BACK", 210, 690, 180, 70);
         addButton(backButton);
     }
 
@@ -62,7 +62,9 @@ public class InstructionsPanel extends ScreenPanel {
 
     private int drawLine(Graphics2D g2, String text, int y) {
         g2.setColor(Color.WHITE);
-        DrawUtils.drawTextLeft(g2, text, lineFont, TEXT_X, y, LINE_HEIGHT);
+        // The font is wide: a long line gets smaller instead of running off the window.
+        Font font = DrawUtils.fitFont(g2, text, lineFont, Constants.WINDOW_WIDTH - 2 * TEXT_X);
+        DrawUtils.drawTextLeft(g2, text, font, TEXT_X, y, LINE_HEIGHT);
         return y + LINE_HEIGHT;
     }
 
