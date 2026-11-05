@@ -46,11 +46,8 @@ public class HudRenderer {
         drawBestScore(g2, bestScore);
         drawScore(g2, score);
         drawTime(g2, timeText);
-        drawIconButton(g2, pauseImage, GameLayout.getPauseButtonRect(), "II");
-        drawIconButton(g2, muteImage, GameLayout.getMuteButtonRect(), "M");
-        if (muted) {
-            drawMutedCross(g2, GameLayout.getMuteButtonRect());
-        }
+        drawPauseButton(g2, GameLayout.getPauseButtonRect());
+        drawMuteButton(g2, GameLayout.getMuteButtonRect(), muted);
     }
 
     private void drawBestScore(Graphics2D g2, int bestScore) {
@@ -83,22 +80,60 @@ public class HudRenderer {
         DrawUtils.drawCenteredText(g2, timeText, timeFont, 0, TIME_Y, Constants.WINDOW_WIDTH, TIME_HEIGHT);
     }
 
-    private void drawIconButton(Graphics2D g2, BufferedImage image, Rectangle area, String fallbackLabel) {
+    // The images of the pause and mute buttons are only backgrounds, so the icons are drawn here.
+    private void drawPauseButton(Graphics2D g2, Rectangle area) {
+        Color iconColor = drawButtonBackground(g2, pauseImage, area);
+        g2.setColor(iconColor);
+        int barWidth = area.width * 15 / 100;
+        int barHeight = area.height * 44 / 100;
+        int gap = area.width * 14 / 100;
+        int top = area.y + (area.height - barHeight) / 2;
+        int left = area.x + (area.width - (2 * barWidth + gap)) / 2;
+        g2.fillRoundRect(left, top, barWidth, barHeight, 4, 4);
+        g2.fillRoundRect(left + barWidth + gap, top, barWidth, barHeight, 4, 4);
+    }
+
+    // A loudspeaker. Sound on: two sound waves next to it. Sound off: a cross next to it.
+    private void drawMuteButton(Graphics2D g2, Rectangle area, boolean muted) {
+        Color iconColor = drawButtonBackground(g2, muteImage, area);
+        g2.setColor(iconColor);
+        g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+        int centerY = area.y + area.height / 2;
+        int left = area.x + area.width * 22 / 100;
+        int boxWidth = area.width * 12 / 100;
+        int boxHalf = area.height * 11 / 100;
+        int coneWidth = area.width * 16 / 100;
+        int coneHalf = area.height * 24 / 100;
+
+        int[] xs = {left, left + boxWidth, left + boxWidth + coneWidth, left + boxWidth + coneWidth, left + boxWidth, left};
+        int[] ys = {centerY - boxHalf, centerY - boxHalf, centerY - coneHalf, centerY + coneHalf, centerY + boxHalf, centerY + boxHalf};
+        g2.fillPolygon(xs, ys, xs.length);
+
+        int waveX = left + boxWidth + coneWidth + area.width * 6 / 100;
+        if (muted) {
+            int size = area.height * 10 / 100;
+            int crossX = waveX + size;
+            g2.drawLine(crossX - size, centerY - size, crossX + size, centerY + size);
+            g2.drawLine(crossX - size, centerY + size, crossX + size, centerY - size);
+        } else {
+            int small = area.height * 14 / 100;
+            int big = area.height * 26 / 100;
+            g2.drawArc(waveX - small, centerY - small, 2 * small, 2 * small, -50, 100);
+            g2.drawArc(waveX - big, centerY - big, 2 * big, 2 * big, -50, 100);
+        }
+        g2.setStroke(new BasicStroke(1f));
+    }
+
+    // Draws the button background (or a plain rounded box if the image is missing).
+    // Returns the colour the icon should have: dark on a light button, white on a dark one.
+    private Color drawButtonBackground(Graphics2D g2, BufferedImage image, Rectangle area) {
         if (image != null) {
             DrawUtils.drawFitted(g2, image, area.x, area.y, area.width, area.height);
-            return;
+            return DrawUtils.isBright(image) ? new Color(25, 30, 70) : Color.WHITE;
         }
         g2.setColor(FALLBACK_PANEL);
         g2.fillRoundRect(area.x, area.y, area.width, area.height, 14, 14);
-        g2.setColor(Color.WHITE);
-        DrawUtils.drawCenteredText(g2, fallbackLabel, bestFont, area.x, area.y, area.width, area.height);
-    }
-
-    // A red diagonal line over the mute icon shows that the sound is off.
-    private void drawMutedCross(Graphics2D g2, Rectangle area) {
-        g2.setColor(new Color(230, 60, 60));
-        g2.setStroke(new BasicStroke(4f));
-        g2.drawLine(area.x + 6, area.y + area.height - 6, area.x + area.width - 6, area.y + 6);
-        g2.setStroke(new BasicStroke(1f));
+        return Color.WHITE;
     }
 }

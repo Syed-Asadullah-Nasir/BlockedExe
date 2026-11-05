@@ -7,7 +7,9 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
-// A clickable button drawn from an image. It grows a little when the mouse is over it.
+// A clickable button. Its image is only the BACKGROUND, so the label is drawn on top of it.
+// Pass showLabelOnImage = false for an image that already shows what it is (like the play icon).
+// It grows a little when the mouse is over it.
 // If the image could not be loaded (null), a plain rounded button with the label is drawn instead.
 public class ImageButton {
 
@@ -17,12 +19,21 @@ public class ImageButton {
     private final BufferedImage image;
     private final String label;
     private final Rectangle bounds;
+    private final boolean showLabelOnImage;
+    private final boolean darkLabel;   // dark text on a light image, white text on a dark one
     private boolean hovered;
 
     public ImageButton(BufferedImage image, String label, int x, int y, int width, int height) {
+        this(image, label, x, y, width, height, true);
+    }
+
+    public ImageButton(BufferedImage image, String label, int x, int y, int width, int height,
+                       boolean showLabelOnImage) {
         this.image = image;
         this.label = label;
         this.bounds = new Rectangle(x, y, width, height);
+        this.showLabelOnImage = showLabelOnImage;
+        this.darkLabel = DrawUtils.isBright(image);
         this.hovered = false;
     }
 
@@ -46,6 +57,10 @@ public class ImageButton {
 
         if (image != null) {
             DrawUtils.drawFitted(g2, image, area.x, area.y, area.width, area.height);
+            if (showLabelOnImage) {
+                DrawUtils.drawButtonLabel(g2, label, labelFont, darkLabel,
+                        area.x, area.y, area.width, area.height);
+            }
         } else {
             drawFallback(g2, area, labelFont);
         }

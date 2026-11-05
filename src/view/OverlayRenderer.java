@@ -69,7 +69,8 @@ public class OverlayRenderer {
         winImage = ResourceLoader.loadImage(Constants.IMAGE_WIN_CHECK);
 
         BufferedImage resumeImage = ResourceLoader.loadImage(Constants.IMAGE_RESUME_BUTTON);
-        BufferedImage restartImage = ResourceLoader.loadImage(Constants.IMAGE_RESTART_ICON);
+        // restart_icon.png is an icon, not a button background, so Restart uses the Resume background.
+        BufferedImage restartImage = resumeImage;
         BufferedImage menuImage = ResourceLoader.loadImage(Constants.IMAGE_MENU_BUTTON);
 
         pauseButtons = new ImageButton[]{

@@ -1,6 +1,7 @@
 package view;
 
 import java.awt.Font;
+import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -51,5 +52,48 @@ public final class DrawUtils {
         FontMetrics metrics = g2.getFontMetrics();
         int textY = y + (height - metrics.getHeight()) / 2 + metrics.getAscent();
         g2.drawString(text, x, textY);
+    }
+
+    // True if the middle of the image is light. Button images are only backgrounds, so the
+    // text or icon drawn on top must be dark on a light button and white on a dark one.
+    public static boolean isBright(BufferedImage image) {
+        if (image == null) {
+            return false;
+        }
+        long total = 0;
+        int samples = 0;
+        for (int i = 3; i <= 7; i += 2) {
+            for (int j = 3; j <= 7; j += 2) {
+                int pixel = image.getRGB(image.getWidth() * i / 10, image.getHeight() * j / 10);
+                if ((pixel >>> 24) < 128) {
+                    continue;   // transparent: not part of the button
+                }
+                int red = (pixel >> 16) & 255;
+                int green = (pixel >> 8) & 255;
+                int blue = pixel & 255;
+                total += (299 * red + 587 * green + 114 * blue) / 1000;
+                samples++;
+            }
+        }
+        return samples > 0 && total / samples > 170;
+    }
+
+    // Draws a label in the middle of a box. The text shrinks if it is too wide for the box.
+    // White text gets a soft shadow so it stays readable on any button colour.
+    public static void drawButtonLabel(Graphics2D g2, String text, Font font, boolean darkText,
+                                       int x, int y, int width, int height) {
+        Font useFont = font;
+        g2.setFont(useFont);
+        while (g2.getFontMetrics().stringWidth(text) > width - 30 && useFont.getSize() > 10) {
+            useFont = useFont.deriveFont(useFont.getSize2D() - 1f);
+            g2.setFont(useFont);
+        }
+
+        if (!darkText) {
+            g2.setColor(new Color(0, 0, 0, 110));
+            drawCenteredText(g2, text, useFont, x + 2, y + 2, width, height);
+        }
+        g2.setColor(darkText ? new Color(25, 30, 70) : Color.WHITE);
+        drawCenteredText(g2, text, useFont, x, y, width, height);
     }
 }

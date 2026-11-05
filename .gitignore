@@ -5,8 +5,6 @@
 !/.gitignore
 !/README.md
 !/src/
-!/data/
-!/logs/
 !/resources/
 
 # Junk that can appear inside the tracked folders
