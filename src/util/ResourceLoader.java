@@ -30,6 +30,26 @@ public final class ResourceLoader {
         }
     }
 
+    // Tries the paths one after the other and returns the first image that loads, or null.
+    // Only one line is logged (naming every path that was tried) if none of them exists.
+    public static BufferedImage loadFirstImage(String[] paths) {
+        for (String path : paths) {
+            try {
+                URL url = ResourceLoader.class.getResource("/" + path);
+                if (url != null) {
+                    BufferedImage image = ImageIO.read(url);
+                    if (image != null) {
+                        return image;
+                    }
+                }
+            } catch (Exception e) {
+                FileLogger.log("Failed to load image " + path + ": " + e);
+            }
+        }
+        FileLogger.log("Image not found. Tried: " + String.join(", ", paths));
+        return null;
+    }
+
     // Returns the custom font at the given size, or a default font if loading fails.
     public static Font loadFont(String path, float size) {
         try (InputStream stream = ResourceLoader.class.getResourceAsStream("/" + path)) {
