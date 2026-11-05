@@ -21,7 +21,8 @@ public final class GameLayout {
     public static final int SLOT_Y = 630;
 
     // Pause and mute buttons in the top right corner
-    private static final int BUTTON_SIZE = 50;
+    private static final int BUTTON_WIDTH = 80;
+    private static final int BUTTON_HEIGHT = 50;
     private static final int BUTTON_Y = 20;
     private static final int BUTTON_GAP = 8;
     private static final int SCREEN_MARGIN = 16;
@@ -71,12 +72,12 @@ public final class GameLayout {
     }
 
     public static Rectangle getMuteButtonRect() {
-        int x = Constants.WINDOW_WIDTH - SCREEN_MARGIN - BUTTON_SIZE;
-        return new Rectangle(x, BUTTON_Y, BUTTON_SIZE, BUTTON_SIZE);
+        int x = Constants.WINDOW_WIDTH - SCREEN_MARGIN - BUTTON_WIDTH;
+        return new Rectangle(x, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT);
     }
 
     public static Rectangle getPauseButtonRect() {
-        int x = getMuteButtonRect().x - BUTTON_GAP - BUTTON_SIZE;
-        return new Rectangle(x, BUTTON_Y, BUTTON_SIZE, BUTTON_SIZE);
+        int x = getMuteButtonRect().x - BUTTON_GAP - BUTTON_WIDTH;
+        return new Rectangle(x, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT);
     }
 }
