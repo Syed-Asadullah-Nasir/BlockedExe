@@ -21,12 +21,11 @@ public class OverlayRenderer {
     private static final Color CARD_BORDER_COLOR = new Color(255, 255, 255, 190);
     private static final Color LIGHT_TEXT = new Color(220, 228, 255);
     private static final Color GOLD = new Color(255, 215, 0);
-    private static final Color WIN_COLOR = new Color(70, 190, 90);
-    private static final Color LOSE_COLOR = new Color(220, 60, 60);
 
     private static final int WINDOW_WIDTH = Constants.WINDOW_WIDTH;
     private static final int CARD_X = 70;
     private static final int CARD_WIDTH = 460;
+    private static final int CARD_TEXT_PADDING = 28;   // space between the card edge and the text
     private static final int BUTTON_WIDTH = 280;
     private static final int BUTTON_HEIGHT = 70;
     private static final int BUTTON_X = (WINDOW_WIDTH - BUTTON_WIDTH) / 2;
@@ -44,8 +43,6 @@ public class OverlayRenderer {
     private static final int END_BUTTON_Y = 520;
     private static final int END_BUTTON_STEP = 85;
 
-    private final BufferedImage crossImage;
-    private final BufferedImage winImage;
     private final Font titleFont;
     private final Font textFont;
     private final Font hintFont;
@@ -59,6 +56,14 @@ public class OverlayRenderer {
     private final OverlayAction[] endActions = {
             OverlayAction.RESTART, OverlayAction.MAIN_MENU};
 
+    // Colours of the result icons: dark outline, main colour and a light highlight.
+    private static final Color WIN_OUTLINE = new Color(15, 110, 60);
+    private static final Color WIN_FILL = new Color(60, 215, 125);
+    private static final Color WIN_SHINE = new Color(185, 255, 215);
+    private static final Color LOSE_OUTLINE = new Color(150, 20, 50);
+    private static final Color LOSE_FILL = new Color(255, 90, 120);
+    private static final Color LOSE_SHINE = new Color(255, 175, 190);
+
     // Colours of the plain buttons that are drawn when a button image is missing.
     private static final Color GREEN = new Color(70, 185, 90);
     private static final Color ORANGE = new Color(240, 150, 40);
@@ -69,9 +74,6 @@ public class OverlayRenderer {
         textFont = baseFont.deriveFont(32f);
         hintFont = baseFont.deriveFont(22f);
         buttonFont = baseFont.deriveFont(26f);
-
-        crossImage = ResourceLoader.loadImage(Constants.IMAGE_GAME_OVER_CROSS);
-        winImage = ResourceLoader.loadImage(Constants.IMAGE_WIN_CHECK);
 
         // restart_icon.png is an icon, not a button background, so it is not used here.
         // If a button image is missing, a plain button in the given colour is drawn instead.
@@ -113,9 +115,9 @@ public class OverlayRenderer {
         drawCard(g2, PAUSE_CARD_Y, PAUSE_CARD_HEIGHT);
 
         g2.setColor(Color.WHITE);
-        DrawUtils.drawCenteredText(g2, "PAUSED", titleFont, 0, PAUSE_CARD_Y + 25, WINDOW_WIDTH, 70);
+        drawCardText(g2, "PAUSED", titleFont, PAUSE_CARD_Y + 25, 70);
         g2.setColor(LIGHT_TEXT);
-        DrawUtils.drawCenteredText(g2, "Press P to resume", hintFont, 0, PAUSE_CARD_Y + 100, WINDOW_WIDTH, 32);
+        drawCardText(g2, "Press P to resume", hintFont, PAUSE_CARD_Y + 100, 32);
 
         drawButtons(g2, pauseButtons);
     }
@@ -127,20 +129,17 @@ public class OverlayRenderer {
         drawResultIcon(g2, won, (WINDOW_WIDTH - END_ICON_SIZE) / 2, END_CARD_Y + 25, END_ICON_SIZE);
 
         g2.setColor(Color.WHITE);
-        DrawUtils.drawCenteredText(g2, getEndTitle(game), titleFont, 0, END_CARD_Y + 125, WINDOW_WIDTH, 70);
+        drawCardText(g2, getEndTitle(game), titleFont, END_CARD_Y + 125, 70);
 
         g2.setColor(Color.WHITE);
-        DrawUtils.drawCenteredText(g2, "SCORE  " + game.getScore(), textFont,
-                0, END_CARD_Y + 205, WINDOW_WIDTH, 40);
+        drawCardText(g2, "SCORE  " + game.getScore(), textFont, END_CARD_Y + 205, 40);
         g2.setColor(GOLD);
-        DrawUtils.drawCenteredText(g2, "BEST  " + game.getBestScore(), textFont,
-                0, END_CARD_Y + 250, WINDOW_WIDTH, 40);
+        drawCardText(g2, "BEST  " + game.getBestScore(), textFont, END_CARD_Y + 250, 40);
         g2.setColor(LIGHT_TEXT);
-        DrawUtils.drawCenteredText(g2, "TIME  " + TimeFormat.formatElapsed(game.getElapsedMillis()), hintFont,
-                0, END_CARD_Y + 295, WINDOW_WIDTH, 36);
+        drawCardText(g2, "TIME  " + TimeFormat.formatElapsed(game.getElapsedMillis()), hintFont, END_CARD_Y + 295, 36);
         if (game.isNewBestReached()) {
             g2.setColor(GOLD);
-            DrawUtils.drawCenteredText(g2, "NEW BEST!", textFont, 0, END_CARD_Y + 333, WINDOW_WIDTH, 40);
+            drawCardText(g2, "NEW BEST!", textFont, END_CARD_Y + 333, 40);
         }
 
         drawButtons(g2, endButtons);
@@ -155,6 +154,12 @@ public class OverlayRenderer {
             default:
                 return "GAME OVER";
         }
+    }
+
+    // Centered text that is never wider than the card: a long text gets smaller instead of overflowing.
+    private void drawCardText(Graphics2D g2, String text, Font font, int y, int height) {
+        DrawUtils.drawCenteredText(g2, text, font, CARD_X + CARD_TEXT_PADDING, y,
+                CARD_WIDTH - 2 * CARD_TEXT_PADDING, height);
     }
 
     private void drawCard(Graphics2D g2, int y, int height) {
@@ -173,26 +178,36 @@ public class OverlayRenderer {
     }
 
     // Uses the provided image. If it is missing, a coloured circle with a check mark or a cross is drawn.
+    // The cross (game over) and the check mark (win) are drawn with lines instead of a small picture,
+    // so they stay sharp at any size. Each is drawn three times: a dark outline, the colour, a highlight.
     private void drawResultIcon(Graphics2D g2, boolean won, int x, int y, int size) {
-        BufferedImage image = won ? winImage : crossImage;
-        if (image != null) {
-            DrawUtils.drawFitted(g2, image, x, y, size, size);
-            return;
-        }
+        Color outline = won ? WIN_OUTLINE : LOSE_OUTLINE;
+        Color fill = won ? WIN_FILL : LOSE_FILL;
+        Color shine = won ? WIN_SHINE : LOSE_SHINE;
 
-        g2.setColor(won ? WIN_COLOR : LOSE_COLOR);
-        g2.fillOval(x, y, size, size);
-        g2.setColor(Color.WHITE);
-        g2.setStroke(new BasicStroke(8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        if (won) {
-            g2.drawLine(x + size * 27 / 100, y + size * 52 / 100, x + size * 43 / 100, y + size * 68 / 100);
-            g2.drawLine(x + size * 43 / 100, y + size * 68 / 100, x + size * 74 / 100, y + size * 32 / 100);
-        } else {
-            int pad = size * 3 / 10;
-            g2.drawLine(x + pad, y + pad, x + size - pad, y + size - pad);
-            g2.drawLine(x + size - pad, y + pad, x + pad, y + size - pad);
-        }
+        drawIconStrokes(g2, won, x, y, size, outline, size * 34 / 100, 0);
+        drawIconStrokes(g2, won, x, y, size, fill, size * 23 / 100, 0);
+        drawIconStrokes(g2, won, x, y, size, shine, size * 5 / 100, -size * 4 / 100);
         g2.setStroke(new BasicStroke(1f));
+    }
+
+    // The lines of the icon. offset moves them up and to the left (used for the highlight).
+    private void drawIconStrokes(Graphics2D g2, boolean won, int x, int y, int size,
+                                 Color color, int width, int offset) {
+        g2.setColor(color);
+        g2.setStroke(new BasicStroke(Math.max(1, width), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        int left = x + offset;
+        int top = y + offset;
+        if (won) {
+            int[] xs = {left + size * 23 / 100, left + size * 43 / 100, left + size * 78 / 100};
+            int[] ys = {top + size * 54 / 100, top + size * 73 / 100, top + size * 28 / 100};
+            g2.drawPolyline(xs, ys, xs.length);
+        } else {
+            int near = size * 24 / 100;
+            int far = size * 76 / 100;
+            g2.drawLine(left + near, top + near, left + far, top + far);
+            g2.drawLine(left + far, top + near, left + near, top + far);
+        }
     }
 
     // ----- buttons -----

@@ -145,17 +145,7 @@ when two or more lines are cleared at once.
   `Drawable` interface. `PlacementPopEffect`, `ClearFlashEffect` and `ScorePopupEffect` extend
   `VisualEffect` and each draws itself differently.
 
-## 8. Work division
-
-`<TODO: fill in before submission – every member must be able to explain their part>`
-
-| Member | GitHub | Contribution |
-|--------|--------|--------------|
-| `<name 1>` | `<username>` | `<e.g. model + logic: Board, BlockPiece, PieceGenerator, Game, ScoreManager, tests>` |
-| `<name 2>` | `<username>` | `<e.g. view + input: screens, renderers, mouse and keyboard handling>` |
-| `<name 3>` | `<username>` | `<e.g. audio, effects, README, logging, integration testing>` |
-
-## 9. Assets
+## 8. Assets
 
 Images, font and sounds come from the free asset pack linked in the assignment (see
 `resources/`). If an asset is missing, the game uses a simple drawn replacement and keeps running.
