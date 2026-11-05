@@ -85,6 +85,27 @@ public final class Constants {
     public static final String SOUND_PLACE = "sounds/place.wav";
     public static final String SOUND_SELECT = "sounds/select.wav";
 
+    // Some button images may have a slightly different file name in the asset pack
+    // (see UI.txt and UI_pngs.docx). The first file that exists is used.
+    public static final String[] IMAGE_PLAY_ICON_PATHS = {
+            IMAGE_PLAY_ICON, "images/play/play_icon", "images/play/play.png", "images/play/Play_icon.png"};
+    public static final String[] IMAGE_INSTRUCTIONS_BUTTON_PATHS = {
+            IMAGE_INSTRUCTIONS_BUTTON, "images/instructions/instructions-button.png",
+            "images/instructions/button.png"};
+    public static final String[] IMAGE_EXIT_BUTTON_PATHS = {
+            IMAGE_EXIT_BUTTON, "images/exit/exit.png", "images/exit/button.png"};
+    public static final String[] IMAGE_CLASSIC_BUTTON_PATHS = {
+            IMAGE_CLASSIC_BUTTON, "images/classic/classic_button.png"};
+    public static final String[] IMAGE_TIME_ATTACK_BUTTON_PATHS = {
+            IMAGE_TIME_ATTACK_BUTTON, "images/time-attack/button.png"};
+    public static final String[] IMAGE_BACK_BUTTON_PATHS = {
+            IMAGE_BACK_BUTTON, "images/back/Back_button.png", "images/back/back_button.png"};
+    public static final String[] IMAGE_RESUME_BUTTON_PATHS = {
+            IMAGE_RESUME_BUTTON, "images/resume/button.png"};
+    public static final String[] IMAGE_RESTART_BUTTON_PATHS = {
+            "images/restart/restart_button.png", "images/restart/restat_button.png",
+            "images/restart/button.png"};
+
     // Text files (relative to the project folder, not the classpath)
     public static final String BEST_SCORE_FILE = "data/bestscore.txt";
     public static final String LOG_FILE = "logs/game.log";

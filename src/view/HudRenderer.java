@@ -22,6 +22,8 @@ public class HudRenderer {
     private static final Rectangle SCORE_AREA = new Rectangle(190, 14, 220, 70);
     private static final int TIME_Y = 92;
     private static final int TIME_HEIGHT = 36;
+    // The thick lip at the bottom of a button image takes about this much of its height.
+    private static final int FACE_LIP_PERCENT = 14;
 
     private final BufferedImage starImage;
     private final BufferedImage scoreBackground;
@@ -81,44 +83,48 @@ public class HudRenderer {
     }
 
     // The images of the pause and mute buttons are only backgrounds, so the icons are drawn here.
+    // The icon is drawn on the "face" of the button: the visible image without its thick bottom lip.
     private void drawPauseButton(Graphics2D g2, Rectangle area) {
-        Color iconColor = drawButtonBackground(g2, pauseImage, area);
-        g2.setColor(iconColor);
-        int barWidth = area.width * 15 / 100;
-        int barHeight = area.height * 44 / 100;
-        int gap = area.width * 14 / 100;
-        int top = area.y + (area.height - barHeight) / 2;
-        int left = area.x + (area.width - (2 * barWidth + gap)) / 2;
+        Rectangle face = drawButtonBackground(g2, pauseImage, area);
+        g2.setColor(iconColor(pauseImage));
+
+        int barHeight = face.height * 72 / 100;
+        int barWidth = Math.max(4, barHeight * 28 / 100);
+        int gap = barWidth;
+        int top = face.y + (face.height - barHeight) / 2;
+        int left = face.x + (face.width - (2 * barWidth + gap)) / 2;
         g2.fillRoundRect(left, top, barWidth, barHeight, 4, 4);
         g2.fillRoundRect(left + barWidth + gap, top, barWidth, barHeight, 4, 4);
     }
 
     // A loudspeaker. Sound on: two sound waves next to it. Sound off: a cross next to it.
     private void drawMuteButton(Graphics2D g2, Rectangle area, boolean muted) {
-        Color iconColor = drawButtonBackground(g2, muteImage, area);
-        g2.setColor(iconColor);
-        g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        Rectangle face = drawButtonBackground(g2, muteImage, area);
+        g2.setColor(iconColor(muteImage));
+        g2.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
-        int centerY = area.y + area.height / 2;
-        int left = area.x + area.width * 22 / 100;
-        int boxWidth = area.width * 12 / 100;
-        int boxHalf = area.height * 11 / 100;
-        int coneWidth = area.width * 16 / 100;
-        int coneHalf = area.height * 24 / 100;
+        int unit = face.height * 135 / 100;   // everything is measured in parts of this size
+        int centerY = face.y + face.height / 2;
+        int boxWidth = unit * 16 / 100;
+        int boxHalf = unit * 14 / 100;
+        int coneWidth = unit * 20 / 100;
+        int coneHalf = unit * 30 / 100;
+        int iconWidth = boxWidth + coneWidth + unit * 40 / 100;   // speaker + waves
+        int left = face.x + (face.width - iconWidth) / 2;
 
         int[] xs = {left, left + boxWidth, left + boxWidth + coneWidth, left + boxWidth + coneWidth, left + boxWidth, left};
         int[] ys = {centerY - boxHalf, centerY - boxHalf, centerY - coneHalf, centerY + coneHalf, centerY + boxHalf, centerY + boxHalf};
         g2.fillPolygon(xs, ys, xs.length);
 
-        int waveX = left + boxWidth + coneWidth + area.width * 6 / 100;
+        int waveX = left + boxWidth + coneWidth + unit * 8 / 100;
         if (muted) {
-            int size = area.height * 10 / 100;
+            int size = unit * 13 / 100;
             int crossX = waveX + size;
             g2.drawLine(crossX - size, centerY - size, crossX + size, centerY + size);
             g2.drawLine(crossX - size, centerY + size, crossX + size, centerY - size);
         } else {
-            int small = area.height * 14 / 100;
-            int big = area.height * 26 / 100;
+            int small = unit * 16 / 100;
+            int big = unit * 30 / 100;
             g2.drawArc(waveX - small, centerY - small, 2 * small, 2 * small, -50, 100);
             g2.drawArc(waveX - big, centerY - big, 2 * big, 2 * big, -50, 100);
         }
@@ -126,14 +132,22 @@ public class HudRenderer {
     }
 
     // Draws the button background (or a plain rounded box if the image is missing).
-    // Returns the colour the icon should have: dark on a light button, white on a dark one.
-    private Color drawButtonBackground(Graphics2D g2, BufferedImage image, Rectangle area) {
+    // Returns the face of the button: where the icon belongs.
+    private Rectangle drawButtonBackground(Graphics2D g2, BufferedImage image, Rectangle area) {
+        Rectangle visible = area;
         if (image != null) {
-            DrawUtils.drawFitted(g2, image, area.x, area.y, area.width, area.height);
-            return DrawUtils.isBright(image) ? new Color(25, 30, 70) : Color.WHITE;
+            visible = DrawUtils.fitRect(area, image.getWidth(), image.getHeight());
+            g2.drawImage(image, visible.x, visible.y, visible.width, visible.height, null);
+        } else {
+            g2.setColor(FALLBACK_PANEL);
+            g2.fillRoundRect(area.x, area.y, area.width, area.height, 14, 14);
         }
-        g2.setColor(FALLBACK_PANEL);
-        g2.fillRoundRect(area.x, area.y, area.width, area.height, 14, 14);
-        return Color.WHITE;
+        int lip = visible.height * FACE_LIP_PERCENT / 100;
+        return new Rectangle(visible.x, visible.y, visible.width, visible.height - lip);
+    }
+
+    // Dark icon on a light button, white icon on a dark one.
+    private Color iconColor(BufferedImage image) {
+        return DrawUtils.isBright(image) ? new Color(25, 30, 70) : Color.WHITE;
     }
 }
