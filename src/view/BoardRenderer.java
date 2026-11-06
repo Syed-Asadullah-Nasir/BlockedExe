@@ -19,6 +19,7 @@ public class BoardRenderer {
     private static final Color BOARD_COLOR = new Color(38, 40, 72);
     private static final Color EMPTY_CELL_COLOR = new Color(55, 58, 100);
     private static final Color SLOT_FALLBACK_COLOR = new Color(30, 38, 85, 200);
+    private static final Color SLOT_HIGHLIGHT_COLOR = new Color(255, 200, 40);
     private static final Color GHOST_VALID_COLOR = new Color(90, 230, 120, 150);
     private static final Color GHOST_INVALID_COLOR = new Color(235, 70, 70, 150);
 
@@ -83,12 +84,13 @@ public class BoardRenderer {
         }
     }
 
-    // A white outline around the slot the player selected with the keyboard.
+    // A gold outline around the slot the player selected with the keyboard.
+    // Gold stays visible on both the light slot image and the dark fallback slot.
     public void drawSlotHighlight(Graphics2D g2, int slotIndex) {
         Rectangle area = GameLayout.getSlotRect(slotIndex);
-        g2.setColor(Color.WHITE);
-        g2.setStroke(new BasicStroke(3f));
-        g2.drawRoundRect(area.x, area.y, area.width, area.height, 20, 20);
+        g2.setColor(SLOT_HIGHLIGHT_COLOR);
+        g2.setStroke(new BasicStroke(4f));
+        g2.drawRoundRect(area.x - 3, area.y - 3, area.width + 6, area.height + 6, 24, 24);
         g2.setStroke(new BasicStroke(1f));
     }
 
@@ -156,7 +158,7 @@ public class BoardRenderer {
 
     private void drawSlotBackground(Graphics2D g2, Rectangle area) {
         if (slotImage != null) {
-            DrawUtils.drawStretched(g2, slotImage, area.x, area.y, area.width, area.height);
+            DrawUtils.drawNineSlice(g2, slotImage, area.x, area.y, area.width, area.height);
         } else {
             g2.setColor(SLOT_FALLBACK_COLOR);
             g2.fillRoundRect(area.x, area.y, area.width, area.height, 20, 20);

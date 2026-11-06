@@ -55,6 +55,26 @@ public final class DrawUtils {
         g2.drawImage(image, x, y, width, height, null);
     }
 
+    // Draws the image so it fills the box, but keeps its corners at their real size
+    // (only the edges and the middle are stretched). A small rounded panel image can then be
+    // used for any size of box without its rounded corners getting squashed or blown up.
+    public static void drawNineSlice(Graphics2D g2, BufferedImage image, int x, int y, int width, int height) {
+        int iw = image.getWidth();
+        int ih = image.getHeight();
+        int corner = Math.min(Math.min(iw, ih) / 3, Math.min(width, height) / 2);
+        int[] srcX = {0, corner, iw - corner, iw};
+        int[] srcY = {0, corner, ih - corner, ih};
+        int[] dstX = {x, x + corner, x + width - corner, x + width};
+        int[] dstY = {y, y + corner, y + height - corner, y + height};
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                g2.drawImage(image,
+                        dstX[col], dstY[row], dstX[col + 1], dstY[row + 1],
+                        srcX[col], srcY[row], srcX[col + 1], srcY[row + 1], null);
+            }
+        }
+    }
+
     // Centers the text horizontally and vertically inside the box.
     public static void drawCenteredText(Graphics2D g2, String text, Font font,
                                         int x, int y, int width, int height) {

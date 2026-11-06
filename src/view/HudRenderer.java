@@ -66,13 +66,14 @@ public class HudRenderer {
 
     private void drawScore(Graphics2D g2, int score) {
         if (scoreBackground != null) {
-            DrawUtils.drawStretched(g2, scoreBackground,
+            DrawUtils.drawNineSlice(g2, scoreBackground,
                     SCORE_AREA.x, SCORE_AREA.y, SCORE_AREA.width, SCORE_AREA.height);
         } else {
             g2.setColor(FALLBACK_PANEL);
             g2.fillRoundRect(SCORE_AREA.x, SCORE_AREA.y, SCORE_AREA.width, SCORE_AREA.height, 24, 24);
         }
-        g2.setColor(Color.WHITE);
+        // The score panel image is light, so the number must be dark on it to be readable.
+        g2.setColor(iconColor(scoreBackground));
         DrawUtils.drawCenteredText(g2, String.valueOf(score), scoreFont,
                 SCORE_AREA.x, SCORE_AREA.y, SCORE_AREA.width, SCORE_AREA.height);
     }
@@ -88,7 +89,7 @@ public class HudRenderer {
         Rectangle face = drawButtonBackground(g2, pauseImage, area);
         g2.setColor(iconColor(pauseImage));
 
-        int barHeight = face.height * 72 / 100;
+        int barHeight = face.height * 60 / 100;
         int barWidth = Math.max(4, barHeight * 28 / 100);
         int gap = barWidth;
         int top = face.y + (face.height - barHeight) / 2;
@@ -103,7 +104,7 @@ public class HudRenderer {
         g2.setColor(iconColor(muteImage));
         g2.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
-        int unit = face.height * 135 / 100;   // everything is measured in parts of this size
+        int unit = face.height * 110 / 100;   // everything is measured in parts of this size
         int centerY = face.y + face.height / 2;
         int boxWidth = unit * 16 / 100;
         int boxHalf = unit * 14 / 100;
