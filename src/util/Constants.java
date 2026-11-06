@@ -48,26 +48,26 @@ public final class Constants {
     };
 
     // Image paths (relative to the resources root)
-    public static final String IMAGE_BACK_BUTTON = "images/back/button.png";
+    public static final String IMAGE_BACK_BUTTON = "images/back/back_button.png";
     public static final String IMAGE_BEST_STAR = "images/best/star.png";
-    public static final String IMAGE_CLASSIC_BUTTON = "images/classic/button.png";
+    public static final String IMAGE_CLASSIC_BUTTON = "images/classic/classic_button.png";
     public static final String IMAGE_EXIT_BUTTON = "images/exit/exit_button.png";
     public static final String IMAGE_GAME_OVER_CROSS = "images/game-over/cross.png";
     public static final String IMAGE_INSTRUCTIONS_BUTTON = "images/instructions/instructions_button.png";
     public static final String IMAGE_MENU_BUTTON = "images/menu/menu_button.png";
     public static final String IMAGE_MUTE_BUTTON = "images/mute/mute_button.png";
     public static final String IMAGE_PAUSE_BUTTON = "images/pause/pause_button.png";
-    public static final String IMAGE_PLAY_ICON = "images/play/play_icon.png";
-    public static final String IMAGE_RESTART_ICON = "images/restart/restart_icon.png";
-    public static final String IMAGE_RESUME_BUTTON = "images/resume/resume_button.png";
-    public static final String IMAGE_SCORE_BACKGROUND = "images/score/score_background.png";
-    public static final String IMAGE_SLOT_BACKGROUND = "images/slot/slot_background.png";
-    public static final String IMAGE_TIME_ATTACK_BUTTON = "images/time-attack/time-attack_button.png";
-    public static final String IMAGE_WIN_CHECK = "images/win/win_check.png";
+    public static final String IMAGE_PLAY_ICON = "images/play/icon.png";
+    public static final String IMAGE_RESTART_ICON = "images/restart/icon.png";
+    public static final String IMAGE_RESUME_BUTTON = "images/resume/button.png";
+    public static final String IMAGE_SCORE_BACKGROUND = "images/score/background.png";
+    public static final String IMAGE_SLOT_BACKGROUND = "images/slot/background.png";
+    public static final String IMAGE_TIME_ATTACK_BUTTON = "images/time-attack/button.png";
+    public static final String IMAGE_WIN_CHECK = "images/win/check.png";
 
     // Font paths. The first file that exists is used, so the font works whatever the
     // file or folder is called (the asset pack names it "Kenney Future Narrow.ttf").
-    public static final String FONT_PATH = "fonts/kenney_future_narrow.ttf";
+    public static final String FONT_PATH = "fonts/Kenney Future Narrow.ttf";
     public static final String[] FONT_PATHS = {
             "fonts/kenney_future_narrow.ttf",
             "fonts/Kenney Future Narrow.ttf",
@@ -88,20 +88,20 @@ public final class Constants {
     // Some button images may have a slightly different file name in the asset pack
     // (see UI.txt and UI_pngs.docx). The first file that exists is used.
     public static final String[] IMAGE_PLAY_ICON_PATHS = {
-            IMAGE_PLAY_ICON, "images/play/play_icon", "images/play/play.png", "images/play/Play_icon.png"};
+            IMAGE_PLAY_ICON, "images/play/play_icon.png", "images/play/play.png", "images/play/Play_icon.png"};
     public static final String[] IMAGE_INSTRUCTIONS_BUTTON_PATHS = {
             IMAGE_INSTRUCTIONS_BUTTON, "images/instructions/instructions-button.png",
             "images/instructions/button.png"};
     public static final String[] IMAGE_EXIT_BUTTON_PATHS = {
             IMAGE_EXIT_BUTTON, "images/exit/exit.png", "images/exit/button.png"};
     public static final String[] IMAGE_CLASSIC_BUTTON_PATHS = {
-            IMAGE_CLASSIC_BUTTON, "images/classic/classic_button.png"};
+            IMAGE_CLASSIC_BUTTON, "images/classic/button.png"};
     public static final String[] IMAGE_TIME_ATTACK_BUTTON_PATHS = {
-            IMAGE_TIME_ATTACK_BUTTON, "images/time-attack/button.png"};
+            IMAGE_TIME_ATTACK_BUTTON, "images/time-attack/time-attack_button.png"};
     public static final String[] IMAGE_BACK_BUTTON_PATHS = {
-            IMAGE_BACK_BUTTON, "images/back/Back_button.png", "images/back/back_button.png"};
+            IMAGE_BACK_BUTTON, "images/back/Back_button.png", "images/back/button.png"};
     public static final String[] IMAGE_RESUME_BUTTON_PATHS = {
-            IMAGE_RESUME_BUTTON, "images/resume/button.png"};
+            IMAGE_RESUME_BUTTON, "images/resume/resume_button.png"};
     public static final String[] IMAGE_RESTART_BUTTON_PATHS = {
             "images/restart/restart_button.png", "images/restart/restat_button.png",
             "images/restart/button.png"};

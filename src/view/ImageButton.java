@@ -30,6 +30,7 @@ public class ImageButton {
     private final boolean showLabelOnImage;
     private final boolean darkLabel;   // dark text on a light image, white text on a dark one
     private Color fallbackColor = DEFAULT_FALLBACK_COLOR;
+    private BufferedImage icon;   // a small picture drawn on the button instead of the label
     private boolean hovered;
 
     public ImageButton(BufferedImage image, String label, int x, int y, int width, int height) {
@@ -63,6 +64,12 @@ public class ImageButton {
         this.fallbackColor = color;
     }
 
+    // Shows this picture (for example the play triangle) on the button instead of the label.
+    // If the picture is null, the label is shown as usual.
+    public void setIcon(BufferedImage icon) {
+        this.icon = icon;
+    }
+
     public boolean contains(int pointX, int pointY) {
         return bounds.contains(pointX, pointY);
     }
@@ -87,11 +94,37 @@ public class ImageButton {
             drawFallbackShape(g2, area);
         }
 
-        if (image == null || showLabelOnImage) {
+        if (icon != null) {
+            drawIcon(g2, area);
+        } else if (image == null || showLabelOnImage) {
             Font font = labelFont.deriveFont(Math.min(MAX_LABEL_SIZE, area.height * LABEL_SIZE_RATIO));
             boolean dark = image != null && darkLabel;
             DrawUtils.drawButtonLabel(g2, label, font, dark,
                     area.x, area.y - area.height / LIP_DIVISOR, area.width, area.height);
+        }
+    }
+
+    // The icon in the middle of the button face (the button without its bottom lip), with a soft shadow.
+    private void drawIcon(Graphics2D g2, Rectangle area) {
+        int lip = image == null ? Math.max(4, area.height / 10) : area.height / 7;
+        int faceHeight = area.height - lip;
+        int size = Math.min(area.width, faceHeight) * 45 / 100;
+        Rectangle box = new Rectangle(area.x + (area.width - size) / 2,
+                area.y + (faceHeight - size) / 2, size, size);
+        Rectangle iconRect = DrawUtils.fitRect(box, icon.getWidth(), icon.getHeight());
+        // The play triangle looks centred when it is moved a little to the right.
+        int nudge = iconRect.width / 10;
+
+        Object oldHint = g2.getRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION);
+        g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION,
+                java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        java.awt.Composite oldComposite = g2.getComposite();
+        g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.25f));
+        g2.drawImage(icon, iconRect.x + nudge + 3, iconRect.y + 3, iconRect.width, iconRect.height, null);
+        g2.setComposite(oldComposite);
+        g2.drawImage(icon, iconRect.x + nudge, iconRect.y, iconRect.width, iconRect.height, null);
+        if (oldHint != null) {
+            g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, oldHint);
         }
     }
 

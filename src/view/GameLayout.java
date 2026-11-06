@@ -20,10 +20,12 @@ public final class GameLayout {
     public static final int SLOT_GAP = 15;
     public static final int SLOT_Y = 630;
 
-    // Pause and mute buttons in the top right corner
-    private static final int BUTTON_WIDTH = 80;
-    private static final int BUTTON_HEIGHT = 50;
-    private static final int BUTTON_Y = 20;
+    // Pause and mute buttons in the top right corner, one above the other.
+    // They have the same 3 : 1 shape as the button images, so the image fills the whole
+    // click area (a squarer box made the image a thin strip much smaller than the click area).
+    private static final int BUTTON_WIDTH = 102;
+    private static final int BUTTON_HEIGHT = 34;
+    private static final int BUTTON_Y = 14;
     private static final int BUTTON_GAP = 8;
     private static final int SCREEN_MARGIN = 16;
 
@@ -71,13 +73,13 @@ public final class GameLayout {
         return -1;
     }
 
-    public static Rectangle getMuteButtonRect() {
+    public static Rectangle getPauseButtonRect() {
         int x = Constants.WINDOW_WIDTH - SCREEN_MARGIN - BUTTON_WIDTH;
         return new Rectangle(x, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT);
     }
 
-    public static Rectangle getPauseButtonRect() {
-        int x = getMuteButtonRect().x - BUTTON_GAP - BUTTON_WIDTH;
-        return new Rectangle(x, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT);
+    public static Rectangle getMuteButtonRect() {
+        Rectangle pause = getPauseButtonRect();
+        return new Rectangle(pause.x, pause.y + BUTTON_HEIGHT + BUTTON_GAP, BUTTON_WIDTH, BUTTON_HEIGHT);
     }
 }
