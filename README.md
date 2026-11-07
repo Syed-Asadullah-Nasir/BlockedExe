@@ -6,8 +6,11 @@ A desktop puzzle game inspired by Block Blast, written in Java Swing for the cou
 Place pieces from a tray of three onto an 8 x 8 board. Fill a complete row or column to
 clear it and earn points. The game ends when none of the remaining pieces fits anywhere.
 
-> **Group:** `<TODO: group name>` | **Section:** `<TODO: 5A / 5B / 9A>`
-> **Members:** `<TODO: name – roll number – GitHub username>` (2–3 members)
+Group: # 3 | **Section:** BSE-5A  
+**Members:**  
+* Asadullah Nasir – 24L-3089 – [Syed-Asadullah-Nasir](https://github.com/Syed-Asadullah-Nasir)  
+* Mahrukh Rehman – 24L-3037 – [Mahrukh-Rehman-Khan](https://github.com/Mahrukh-Rehman-Khan)  
+* Hamna Faisal – 24L-2551 – [HamnaFAISAL28](https://github.com/HamnaFAISAL28)
 
 ---
 
