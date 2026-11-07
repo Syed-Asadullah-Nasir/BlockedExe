@@ -151,9 +151,9 @@ when two or more lines are cleared at once.
 
 | Member | GitHub | Contribution |
 |--------|--------|--------------|
-| `<Asadullah Nasir>` | `<Syed-Asadullah-Nasir>` | `<e.g. model + logic: Board, BlockPiece, PieceGenerator, Game, ScoreManager, tests>` |
-| `<Mahrukh Rehman>` | `<Mahrukh-Rehman-Khan>` | `<e.g. view + input: screens, renderers, mouse and keyboard handling>` |
-| `<Hamna Faisal>` | `<HamnaFAISAL28>` | `<e.g. audio, effects, README, logging, integration testing>` |
+| `Asadullah Nasir` | `Syed-Asadullah-Nasir` | `e.g. model + logic: Board, BlockPiece, PieceGenerator, Game, ScoreManager, tests` |
+| `Mahrukh Rehman` | `Mahrukh-Rehman-Khan` | `e.g. view + input: screens, renderers, mouse and keyboard handling` |
+| `Hamna Faisal` | `HamnaFAISAL28` | `e.g. audio, effects, README, logging, integration testing` |
 
 ## 9. Assets
 
