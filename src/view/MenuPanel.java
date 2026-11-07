@@ -20,10 +20,9 @@ public class MenuPanel extends ScreenPanel {
         titleFont = gameFrame.createUiFont(56f);
         subtitleFont = gameFrame.createUiFont(22f);
 
-        // play/icon.png is only a small white triangle, not a button background. So a plain
-        // button is drawn and the triangle is put on it (the label "PLAY" is shown if it is missing).
+        // A plain blue button with a play triangle drawn on it (sharp at any size).
         playButton = new ImageButton(null, "PLAY", 210, 270, 180, 180);
-        playButton.setIcon(ResourceLoader.loadFirstImage(Constants.IMAGE_PLAY_ICON_PATHS));
+        playButton.setPlayIcon(true);
         instructionsButton = new ImageButton(
                 ResourceLoader.loadFirstImage(Constants.IMAGE_INSTRUCTIONS_BUTTON_PATHS), "INSTRUCTIONS", 150, 500, 300, 80);
         exitButton = new ImageButton(

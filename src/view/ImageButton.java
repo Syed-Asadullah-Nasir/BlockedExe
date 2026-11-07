@@ -30,7 +30,7 @@ public class ImageButton {
     private final boolean showLabelOnImage;
     private final boolean darkLabel;   // dark text on a light image, white text on a dark one
     private Color fallbackColor = DEFAULT_FALLBACK_COLOR;
-    private BufferedImage icon;   // a small picture drawn on the button instead of the label
+    private boolean playIcon;   // draw a play triangle on the button instead of the label
     private boolean hovered;
 
     public ImageButton(BufferedImage image, String label, int x, int y, int width, int height) {
@@ -64,10 +64,9 @@ public class ImageButton {
         this.fallbackColor = color;
     }
 
-    // Shows this picture (for example the play triangle) on the button instead of the label.
-    // If the picture is null, the label is shown as usual.
-    public void setIcon(BufferedImage icon) {
-        this.icon = icon;
+    // Shows a play triangle on the button instead of the label.
+    public void setPlayIcon(boolean playIcon) {
+        this.playIcon = playIcon;
     }
 
     public boolean contains(int pointX, int pointY) {
@@ -94,8 +93,8 @@ public class ImageButton {
             drawFallbackShape(g2, area);
         }
 
-        if (icon != null) {
-            drawIcon(g2, area);
+        if (playIcon) {
+            drawPlayIcon(g2, area);
         } else if (image == null || showLabelOnImage) {
             Font font = labelFont.deriveFont(Math.min(MAX_LABEL_SIZE, area.height * LABEL_SIZE_RATIO));
             boolean dark = image != null && darkLabel;
@@ -104,28 +103,32 @@ public class ImageButton {
         }
     }
 
-    // The icon in the middle of the button face (the button without its bottom lip), with a soft shadow.
-    private void drawIcon(Graphics2D g2, Rectangle area) {
+    // A white play triangle in the middle of the button face (the button without its bottom lip),
+    // with a soft shadow. It is drawn with shapes instead of the small play/icon.png picture,
+    // because that picture is only 30 x 34 pixels and looks blurry when it is made bigger.
+    private void drawPlayIcon(Graphics2D g2, Rectangle area) {
         int lip = image == null ? Math.max(4, area.height / 10) : area.height / 7;
         int faceHeight = area.height - lip;
-        int size = Math.min(area.width, faceHeight) * 45 / 100;
-        Rectangle box = new Rectangle(area.x + (area.width - size) / 2,
-                area.y + (faceHeight - size) / 2, size, size);
-        Rectangle iconRect = DrawUtils.fitRect(box, icon.getWidth(), icon.getHeight());
-        // The play triangle looks centred when it is moved a little to the right.
-        int nudge = iconRect.width / 10;
+        int height = Math.min(area.width, faceHeight) * 45 / 100;
+        int width = height * 88 / 100;
+        // The triangle looks centred when it is moved a little to the right.
+        int left = area.x + (area.width - width) / 2 + width / 10;
+        int top = area.y + (faceHeight - height) / 2;
+        int corner = Math.max(2, height / 7);   // how round the corners are
 
-        Object oldHint = g2.getRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION);
-        g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION,
-                java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        java.awt.Composite oldComposite = g2.getComposite();
-        g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.25f));
-        g2.drawImage(icon, iconRect.x + nudge + 3, iconRect.y + 3, iconRect.width, iconRect.height, null);
-        g2.setComposite(oldComposite);
-        g2.drawImage(icon, iconRect.x + nudge, iconRect.y, iconRect.width, iconRect.height, null);
-        if (oldHint != null) {
-            g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, oldHint);
-        }
+        int[] xs = {left, left + width, left};
+        int[] ys = {top, top + height / 2, top + height};
+
+        g2.setStroke(new BasicStroke(corner, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(new Color(0, 0, 0, 60));
+        g2.translate(3, 3);
+        g2.fillPolygon(xs, ys, 3);
+        g2.drawPolygon(xs, ys, 3);
+        g2.translate(-3, -3);
+        g2.setColor(Color.WHITE);
+        g2.fillPolygon(xs, ys, 3);
+        g2.drawPolygon(xs, ys, 3);
+        g2.setStroke(new BasicStroke(1f));
     }
 
     // A rounded button with a darker lip at the bottom, like the buttons of the asset pack.
