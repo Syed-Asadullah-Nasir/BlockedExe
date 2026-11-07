@@ -26,7 +26,7 @@ No external libraries are used, only the standard JDK (Swing, Java 2D, `javax.so
 ## 2. Installation
 
 ```bash
-git clone <TODO: repository URL>
+git clone https://github.com/Syed-Asadullah-Nasir/BlockedExe.git
 cd BlockedExe
 ```
 
@@ -149,8 +149,6 @@ when two or more lines are cleared at once.
   `VisualEffect` and each draws itself differently.
 
 ## 8. Work division
-
-`<TODO: fill in before submission – every member must be able to explain their part>`
 
 | Member | GitHub | Contribution |
 |--------|--------|--------------|
